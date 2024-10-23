@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book an Appointment</title>
+</head>
+<body>
+    <h1>Book an Appointment</h1>
+
+    <form method="POST">
+        <label for="coach_id">Choose Coach:</label>
+        <select name="coach_id" id="coach_id">
+            {% for coach in coaches %}
+                <option value="{{ coach[0] }}">{{ coach[1] }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="appointment_date">Appointment Date:</label>
+        <input type="datetime-local" name="appointment_date" id="appointment_date" required>
+
+        <button type="submit">Book Appointment</button>
+    </form>
+</body>
+</html>

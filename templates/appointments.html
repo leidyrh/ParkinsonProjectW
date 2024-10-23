@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Appointments</title>
+</head>
+<body>
+    <h1>Your Appointments</h1>
+    <ul>
+        {% for appointment in appointments %}
+            <li>
+                Appointment with Coach {{ appointment[2] }} on {{ appointment[3] }}
+            </li>
+        {% endfor %}
+    </ul>
+    <a href="{{ url_for('patient.book_appointment') }}">Book New Appointment</a>
+</body>
+</html>
