@@ -1,7 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
 
 from app import mysql
-
 # Create the Blueprint for patient-related routes
 patient_bp = Blueprint('patient', __name__, url_prefix='/patient')
 
@@ -125,4 +124,11 @@ def book_appointment():
     coaches = cur.fetchall()
 
     return render_template('book_appointment.html', coaches=coaches)
+# Chat Room route (if separate from the admin chat)
+@patient_bp.route('/chat')
+def chat():
+    if 'logged_in' in session and session.get('role') == 'patient':
+        return render_template('chat_room.html')  # Render the chat room template
+    else:
+        return redirect(url_for('login'))
 

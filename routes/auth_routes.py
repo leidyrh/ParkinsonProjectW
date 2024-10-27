@@ -1,10 +1,8 @@
 # Authentication routes (login, logout)
 import MySQLdb
 import bcrypt
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 import re
-from bcrypt import hashpw  # This would cause issues
-
 from app import mysql
 
 # Create the Blueprint for auth routes
@@ -118,7 +116,7 @@ def register():
         flash("Registration successful! Please log in.", "success")
         return redirect(url_for('auth.login'))
 
-    return render_template('register.html')
+    return render_template('register2.html')
 
 
 # Logout Route
