@@ -1,15 +1,16 @@
+import pymysql
+pymysql.install_as_MySQLdb()
 from flask import Flask, redirect, url_for
 from flask_mysqldb import MySQL
-from config import DevelopmentConfig  # or choose a different environment (e.g., ProductionConfig)
-
+from config import Config  # or choose a different environment (e.g., ProductionConfig)
 
 mysql = MySQL()
 
 def create_app():
+
     app = Flask(__name__)
     # Load configuration from the config.py file
-    app.config.from_object(DevelopmentConfig)  # You can change this to use ProductionConfig or TestingConfig'
-
+    app.config.from_object(Config)  # You can change this to use ProductionConfig or TestingConfig'
     # Initialize MySQL with the Flask app
     mysql.init_app(app)
 
@@ -31,50 +32,6 @@ def create_app():
         return redirect(url_for('auth.login'))
 
     return app
-
-# @app.route('/')
-# def home():
-#     return render_template('login.html')
-#
-#
-# @app.route('/login', methods=['POST'])
-# def login():
-#     username = request.form['username']
-#     password = request.form['password']
-#
-#     print(f"Attempting to log in: {username}")  # Debug line
-#
-#     if username in users and users[username] == password:
-#         print(f"Login successful for: {username}")  # Debug line
-#         return redirect(url_for('chat', username=username))  # Redirect to the chat page
-#     else:
-#         flash('Invalid username or password!')
-#         print(f"Invalid credentials for: {username}")  # Debug line
-#         return redirect(url_for('home'))
-#
-#
-# @app.route('/register', methods=['GET', 'POST'])
-# def register():
-#     if request.method == 'POST':
-#         username = request.form['username']
-#         password = request.form['password']
-#
-#         if username in users:
-#             flash('Username already exists! Please choose a different one.')
-#             return redirect(url_for('register'))
-#
-#         users[username] = password
-#         flash('Registration successful! You can now log in.')
-#         return redirect(url_for('home'))
-#
-#     return render_template('register.html')
-#
-#
-# @app.route('/chat/<username>')
-# def chat(username):
-#     return render_template('chat.html', username=username)  # Render the chat page
-
-
 
 if __name__ == '__main__':
     app = create_app()

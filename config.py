@@ -1,18 +1,17 @@
 import os
 
-
 class Config:
     # Secret key for session management (You should change this to a more secure value)
     SECRET_KEY = os.urandom(24)
 
     # Session lifetime settings (optional)
     PERMANENT_SESSION_LIFETIME = 3600  # In seconds (1 hour)
-
-    # MySQL Configuration
-    MYSQL_HOST = 'localhost'
-    MYSQL_USER = 'root'  # Change this to your MySQL username
-    MYSQL_PASSWORD = 'Student1'  # Change this to your MySQL password
-    MYSQL_DB = 'parkinson_db'  # Change this to your MySQL database name
+    #MySQL Configuration for Amazon RDS
+    MYSQL_HOST = "parkinson-db.cpkow24yk7fq.us-east-2.rds.amazonaws.com"  # Endpoint of RDS instance
+    MYSQL_USER = "admin"
+    MYSQL_PASSWORD = "StudentFall2024!"
+    MYSQL_DB = "parkinson-db"
+    MYSQL_PORT = 3306  # Default MySQL port
 
     # For MySQLdb (This would be needed if you're using MySQLdb for connection)
     MYSQL_CURSORCLASS = 'DictCursor'  # Use DictCursor if you want your queries to return dictionaries
