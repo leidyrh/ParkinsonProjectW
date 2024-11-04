@@ -35,7 +35,7 @@ def login():
         print(f"Login attempt for username: {username}")
 
         # Check if username exists in the database
-        cur = mysql.connection.cursor()
+        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cur.execute("SELECT * FROM users WHERE username = %s", (username,))
         user = cur.fetchone() # This will be a dictionary
         # Close the cursor
@@ -45,13 +45,15 @@ def login():
             # Check if the password matches
             if bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
                 # Set session and redirect based on the role
-
                 # Debugging: print user and session info
                 print(f"User authenticated: {user['username']}")
-
                 session['user_id'] = user['user_id']
+                session['role'] = user['role']
+                session['username'] = user['username']
                 if user['role'] == 'admin':
                     return redirect(url_for('admin.admin_dashboard'))
+                elif user['role'] == 'coach':
+                    return redirect(url_for('coach.coach_dashboard'))
                 else:
                     return redirect(url_for('patient.patient_dashboard'))
             else:
@@ -77,14 +79,14 @@ def register():
         if existing_user:
             flash('Username already exists. Please choose another one.', 'danger')
             return redirect(url_for('auth.register'))
-            # Hash the password before storing it
+        #Hash the password before storing it
         hashed_pw = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
-            # Check if there is an admin in the database
+        # Check if there is an admin in the database
         cur.execute("SELECT * FROM users WHERE role = 'admin'")
         admin_exists = cur.fetchone()
 
-            # If no admin exists, make this user the admin
+        # If no admin exists, make this user the admin
         if not admin_exists:
             role = 'admin'
         else:
@@ -109,6 +111,12 @@ def register():
         #cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cur.execute("INSERT INTO users (username, password, email, role) VALUES (%s, %s, %s, %s)",
                         (username, hashed_pw.decode('utf-8'), email, role))  # Role 'patient' by default for simplicity
+        # Get the user_id of the newly created user
+        user_id = cur.lastrowid
+        mysql.connection.commit()
+        # After inserting into the users table, also insert into the patients table
+        cur.execute("INSERT INTO patients (user_id,username, password, email) VALUES (%s, %s, %s,%s)",
+                        (user_id,username, hashed_pw.decode('utf-8'), email))
 
         mysql.connection.commit()
         cur.close()
@@ -116,7 +124,7 @@ def register():
         flash("Registration successful! Please log in.", "success")
         return redirect(url_for('auth.login'))
 
-    return render_template('register2.html')
+    return render_template('register.html')
 
 
 # Logout Route

@@ -15,15 +15,15 @@ def chat(receiver_id):
         # Retrieve messages for the conversation between sender and receiver
         cur = mysql.connection.cursor()
         cur.execute("""
-            SELECT m.id, m.message, m.timestamp, 
+            SELECT message_id, message_id.message, message_id.timestamp, 
                    u1.username AS sender_username, 
                    u2.username AS receiver_username 
-            FROM messages m
-            JOIN users u1 ON m.sender_id = u1.id
-            JOIN users u2 ON m.receiver_id = u2.id
-            WHERE (m.sender_id = %s AND m.receiver_id = %s) 
-               OR (m.sender_id = %s AND m.receiver_id = %s)
-            ORDER BY m.timestamp ASC
+            FROM messages message_id
+            JOIN users u1 ON message_id.sender_id = u1.id
+            JOIN users u2 ON message_id.receiver_id = u2.id
+            WHERE (message_id.sender_id = %s AND message_id.receiver_id = %s) 
+               OR (message_id.sender_id = %s AND message_id.receiver_id = %s)
+            ORDER BY message_id.timestamp ASC
         """, (sender_id, receiver_id, receiver_id, sender_id))
 
         messages = cur.fetchall()  # Fetch all messages for the conversation
