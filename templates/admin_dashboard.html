@@ -52,15 +52,17 @@
                     <select class="form-select" name="user_id" id="user_id" required>
                         <option value="">Choose a user</option>
                         {% for user in users %}
-                            <option value="{{ user.id }}">{{ user.username }} ({{ user.role }})</option>
+                            <option value="{{ user.user_id }}">{{ user.username }} ({{ user.role }})</option>
                         {% endfor %}
                     </select>
                 </div>
                 <div class="mb-3">
                     <label for="new_role" class="form-label">New Role</label>
                     <select class="form-select" name="new_role" id="new_role" required>
+                        <option value="admin">Admin </option>
                         <option value="patient">Patient</option>
                         <option value="coach">Coach </option>
+
                     </select>
                 </div>
                 <button type="submit" class="btn btn-secondary">Assign Role</button>
@@ -84,7 +86,7 @@
         <tbody>
             {% for user in users %}
                 <tr>
-                    <td>{{ user.id }}</td>  <!-- ID -->
+                    <td>{{ user.user_id }}</td>  <!-- ID -->
                     <td>{{ user.username }}</td>  <!-- Username -->
                     <td>{{ user.role }}</td>  <!-- Role -->
 
@@ -92,8 +94,9 @@
                     <td>
                         <form action="{{ url_for('admin.admin_dashboard') }}" method="POST" style="display:inline;">
                             <input type="hidden" name="action" value="assign_role">
-                            <input type="hidden" name="user_id" value="{{ user.id }}">
+                            <input type="hidden" name="user_id" value="{{ user.user_id }}">
                             <select name="new_role" required>
+                                <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
                                 <option value="patient" {% if user.role == 'patient' %}selected{% endif %}>Patient</option>
                                 <option value="coach" {% if user.role == 'coach' %}selected{% endif %}>Coach</option>
                             </select>
@@ -103,7 +106,7 @@
                         <!-- Delete User Form -->
                         <form action="{{ url_for('admin.admin_dashboard') }}" method="POST" style="display:inline;">
                             <input type="hidden" name="action" value="delete_user">
-                            <input type="hidden" name="user_id" value="{{ user.id }}">
+                            <input type="hidden" name="user_id" value="{{ user.user_id }}">
                             <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                         </form>
                     </td>
@@ -114,6 +117,31 @@
 
     <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary">Logout</a>
 </div>
+<!-- Edit User Form -->
+<div class="col-md-6">
+    <h3>Edit User</h3>
+    <form action="{{ url_for('admin.edit_user') }}" method="POST">
+        <div class="mb-3">
+            <label for="user_id" class="form-label">Select User</label>
+            <select class="form-select" name="user_id" id="user_id" required>
+                <option value="">Choose a user</option>
+                {% for user in users %}
+                    <option value="{{ user.user_id }}">{{ user.username }} ({{ user.role }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="username" class="form-label">New Username</label>
+            <input type="text" class="form-control" name="username" id="username" required>
+        </div>
+        <div class="mb-3">
+            <label for="password" class="form-label">New Password</label>
+            <input type="password" class="form-control" name="password" id="password" required>
+        </div>
+        <button type="submit" class="btn btn-warning">Update User</button>
+    </form>
+</div>
+
 
 </body>
 </html>

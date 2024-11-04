@@ -52,10 +52,20 @@ def admin_dashboard():
                 # Assign a new role to an existing user
                 user_id = request.form['user_id']
                 new_role = request.form['new_role']
-                # Ensure the new role is either 'patient' or 'coach' (not 'admin')
-                if new_role not in ['patient', 'coach']:
-                    flash('Only "patient" or "coach" roles can be assigned.', 'danger')
-                    return redirect(url_for('admin.admin_dashboard'))
+                MAX_ADMINS = 5
+                # # Ensure the new role is either 'patient' or 'coach' (not 'admin')
+                # if new_role not in ['patient', 'coach']:
+                #     flash('Only "patient" or "coach" roles can be assigned.', 'danger')
+                #     return redirect(url_for('admin.admin_dashboard'))
+                    # Ensure the new role is either 'patient' or 'coach' or check if adding 'admin'
+                if new_role == 'admin':
+                    # Count the number of existing admins
+                    cur.execute("SELECT COUNT(*) AS admin_count FROM users WHERE role = 'admin'")
+                    admin_count = cur.fetchone()['admin_count']
+
+                    if admin_count >= MAX_ADMINS:
+                        flash(f'Cannot assign more than {MAX_ADMINS} admins.', 'danger')
+                        return redirect(url_for('admin.admin_dashboard'))
 
                 # Update the user's role in the database
                 cur = mysql.connection.cursor()
@@ -86,87 +96,33 @@ def admin_dashboard():
         flash('You do not have permission to access the admin dashboard.', 'danger')
         return redirect(url_for('patient.patient_dashboard'))  # Redirect if not admin
 
-@admin_bp.route('/create_patient', methods=['GET', 'POST'])
-def create_patient():
-    if 'role' not in session or session['role'] != 'admin':
-        return redirect(url_for('home'))  # Redirect to home if not admin
-
-    if request.method == 'POST':
-        name = request.form['name']
-        age = request.form['age']
-        gender = request.form['gender']
-        username = request.form['username']
-        email = request.form['email']
-        password = request.form['password']
-
-        # Validate input using regular expressions
-        if not is_valid_username(username):
-            flash("Invalid username! It should be alphanumeric and between 3 to 15 characters.", "danger")
-            return redirect(url_for('admin.create_patient'))
-
-        if not is_valid_email(email):
-            flash("Invalid email format!", "danger")
-            return redirect(url_for('admin.create_patient'))
-
-        if not is_strong_password(password):
-            flash(
-                "Password is too weak! It should be at least 8 characters long, contain a number, and a special character.",
-                "danger")
-            return redirect(url_for('admin.create_patient'))
-
-        # Insert into users table (no password hashing, just plain text)
-        cur = mysql.connection.cursor()
-        cur.execute("INSERT INTO users (username, password, role, email) VALUES (%s, %s, %s, %s)",
-                    (username, password, 'patient', email))
-        mysql.connection.commit()
-
-        # Get user ID
-        cur.execute("SELECT id FROM users WHERE username = %s", (username,))
-        user = cur.fetchone()
-
-        # Insert into patients table
-        cur.execute("INSERT INTO patients (user_id, name, age, gender) VALUES (%s, %s, %s, %s)",
-                    (user[0], name, age, gender))
-        mysql.connection.commit()
-
-        flash('Patient created successfully!', 'success')
-        return redirect(url_for('admin.admin_dashboard'))
-
-    return render_template('create_patient.html')
-
-@admin_bp.route('/assign_role/<int:user_id>', methods=['GET', 'POST'])
-def assign_role(user_id):
-    if 'user_id' not in session:
-        flash('You must be logged in to assign roles.', 'warning')
-        return redirect(url_for('auth.login'))
-    # Get a cursor from the MySQL connection
-    cur = mysql.connection.cursor()
-
-    if request.method == 'POST':
-        new_role = request.form['role']  # Role can be 'patient', 'admin', etc.
-        cur.execute("UPDATE users SET role = %s WHERE id = %s", (new_role, user_id))
-        mysql.connection.commit()
-        cur.close()
-
-        flash('Role successfully assigned!', 'success')
-        return redirect(url_for('admin.admin_dashboard'))  # Redirect back to admin dashboard
-
-    # Get user details for the admin to view before assigning a role
-    cur.execute("SELECT * FROM users WHERE id = %s", (user_id,))
-    user = cur.fetchone()
-    cur.close()
-
-    return render_template('assign_role.html', user=user)
-
-# Additional route to handle user deletion
-@admin_bp.route('/delete_user/<int:user_id>', methods=['POST'])
-def delete_user(user_id):
+@admin_bp.route('/edit_user', methods=['POST'])
+def edit_user():
     if 'user_id' not in session:
         flash('You must be logged in to access this page.', 'warning')
         return redirect(url_for('auth.login'))
 
+    user_id = request.form['user_id']
+    new_username = request.form['username']
+    new_password = request.form['password']
+
+    # Validate new username and password (using your existing validation functions)
+    if not is_valid_username(new_username):
+        flash("Invalid username! It should be alphanumeric and between 3 to 15 characters.", "danger")
+        return redirect(url_for('admin.admin_dashboard'))
+
+    if not is_strong_password(new_password):
+        flash("Password is too weak! It should be at least 8 characters long, contain a number, and a special character.", "danger")
+        return redirect(url_for('admin.admin_dashboard'))
+
+    # Hash the new password
+    hashed_password = generate_password_hash(new_password)
+
+    # Update the user's username and password in the database
     cur = mysql.connection.cursor()
-    cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
+    cur.execute("UPDATE users SET username = %s, password = %s WHERE user_id = %s", (new_username, hashed_password, user_id))
     mysql.connection.commit()
-    flash('User deleted successfully!', 'success')
+
+    flash('User information updated successfully!', 'success')
     return redirect(url_for('admin.admin_dashboard'))
+
