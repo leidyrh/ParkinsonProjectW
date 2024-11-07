@@ -2,9 +2,9 @@ import MySQLdb
 import bcrypt
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
 from werkzeug.security import generate_password_hash
-
 from app import mysql
 from routes.auth_routes import is_valid_username, is_valid_email, is_strong_password
+
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -103,26 +103,50 @@ def edit_user():
         return redirect(url_for('auth.login'))
 
     user_id = request.form['user_id']
-    new_username = request.form['username']
-    new_password = request.form['password']
+    username = request.form['username']
+    password = request.form['password']
 
     # Validate new username and password (using your existing validation functions)
-    if not is_valid_username(new_username):
+    if not is_valid_username(username):
         flash("Invalid username! It should be alphanumeric and between 3 to 15 characters.", "danger")
         return redirect(url_for('admin.admin_dashboard'))
 
-    if not is_strong_password(new_password):
+    if not is_strong_password(password):
         flash("Password is too weak! It should be at least 8 characters long, contain a number, and a special character.", "danger")
         return redirect(url_for('admin.admin_dashboard'))
 
     # Hash the new password
-    hashed_password = generate_password_hash(new_password)
+    password = generate_password_hash(password)
 
     # Update the user's username and password in the database
     cur = mysql.connection.cursor()
-    cur.execute("UPDATE users SET username = %s, password = %s WHERE user_id = %s", (new_username, hashed_password, user_id))
+    cur.execute("UPDATE users SET username = %s, password = %s WHERE user_id = %s", (username, password, user_id))
     mysql.connection.commit()
 
     flash('User information updated successfully!', 'success')
     return redirect(url_for('admin.admin_dashboard'))
+
+# Route to list all patients
+@admin_bp.route('/patients')
+def list_patients():
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM patients")
+    patients = cur.fetchall()
+    cur.close()
+    return render_template('admin_patients_list.html', patients=patients)
+
+@admin_bp.route('/patient/<int:patient_id>')
+def view_patient_profile(patient_id):
+
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM patients WHERE patient_id = %s", (patient_id,))
+    patient = cur.fetchone()
+    cur.close()
+
+    if patient:
+        return render_template('admin_patient_profile.html', patient=patient)
+    else:
+        flash('Patient not found.')
+        return redirect(url_for('.list_patients'))
+
 

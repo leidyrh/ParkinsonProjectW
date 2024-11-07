@@ -114,6 +114,10 @@
             {% endfor %}
         </tbody>
     </table>
+  <td>
+                    <a href="{{ url_for('admin.list_patients') }}"> List of Patients</a>
+                    </td>
+
 
     <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary">Logout</a>
 </div>
