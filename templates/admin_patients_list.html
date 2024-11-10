@@ -10,8 +10,10 @@
     <table border="1">
         <thead>
             <tr>
-                <th>Name</th>
-                <th>Age</th>
+                <th>User ID</th>
+                <th>Username</th>
+                <th>First Name</th>
+                <th>DAte Of Birth</th>
                 <th>Diagnosis</th>
                 <th>Actions</th>
             </tr>
@@ -19,11 +21,23 @@
         <tbody>
             {% for patient in patients %}
             <tr>
-                <td>{{ patient[username] }}</td>
-                <td>{{ patient[gender] }}</td>
-                <td>{{ patient[email] }}</td>
+                <td>{{ patient.user_id}}</td>
+                <td>{{ patient.username}}</td>
+                <td>{{ patient.first_name }}</td>
+                <td>{{ patient.email }}</td>
+                 <td>{{ patient.phone }}</td>
+                <td>{{ patient.dob }}</td>
+                <td>{{ patient.health_condition}}</td>
+                <td>{{ patient.address }}</td>
                 <td>
-                    <a href="{{ url_for('admin.view_patient_profile', patient_id=patient['patient_id']) }}">View</a>
+                    <a href="{{ url_for('admin.view_patient_profile', user_id=patient.user_id) }}">View</a>
+                    <a href="{{ url_for('admin.edit_user', user_id=patient.user_id) }}" class="btn btn-sm btn-warning">Edit</a>
+                    <!-- Delete User Form -->
+                    <form action="{{ url_for('admin.admin_dashboard') }}" method="POST" style="display:inline;">
+                        <input type="hidden" name="action" value="delete_user">
+                        <input type="hidden" name="user_id" value="{{ patient.user_id }}">
+                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                    </form>
                     <!-- Additional links for edit or delete could be added here -->
                 </td>
             </tr>
