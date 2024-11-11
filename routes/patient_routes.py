@@ -1,9 +1,9 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
-
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from app import mysql
+import pymysql
+
 # Create the Blueprint for patient-related routes
 patient_bp = Blueprint('patient', __name__, url_prefix='/patient')
-
 
 # Patient Dashboard
 @patient_bp.route('/dashboard')
@@ -15,9 +15,10 @@ def patient_dashboard():
     user_id = session.get('user_id')
 
     # Get the patient's information from the database
-    cur = mysql.connection.cursor()
+    cur = mysql.connection.cursor(pymysql.cursors.DictCursor)
     cur.execute("SELECT * FROM patients WHERE user_id = %s", (user_id,))
     patient = cur.fetchone()
+    cur.close()
 
     if not patient:
         flash("Patient not found!", "danger")
@@ -25,9 +26,8 @@ def patient_dashboard():
 
     return render_template('patient_dashboard.html', patient=patient)
 
-
 # Edit Patient Profile
-@patient_bp.route('/edit', methods=['GET', 'POST'])
+@patient_bp.route('/edit_profile', methods=['GET', 'POST'])
 def edit_profile():
     """Allows patients to edit their profile information."""
     if 'role' not in session or session['role'] != 'patient':
@@ -36,40 +36,54 @@ def edit_profile():
     user_id = session.get('user_id')
 
     if request.method == 'POST':
-        name = request.form['name']
-        age = request.form['age']
-        gender = request.form['gender']
+        # Retrieve form data
+        first_name = request.form.get('first_name')
+        last_name = request.form.get('last_name')
+        dob = request.form.get('dob')
+        gender = request.form.get('gender')
+        phone = request.form.get('phone')
+        email = request.form.get('email')
+        address = request.form.get('address')
+        emergency_contact_name = request.form.get('emergency_contact_name')
+        emergency_contact_phone = request.form.get('emergency_contact_phone')
+        health_condition = request.form.get('health_condition')
+        mobility_level = request.form.get('mobility_level')
 
-        # Validate inputs
-        if not name or not age or not gender:
-            flash("All fields are required.", "danger")
+        # Validate required fields
+        if not first_name or not last_name or not email:
+            flash("First Name, Last Name, and Email are required.", "danger")
             return redirect(url_for('patient.edit_profile'))
 
-        # Update the patient's profile information in the database
+        # Update the database
         cur = mysql.connection.cursor()
         try:
             cur.execute("""
-                UPDATE patients 
-                SET name = %s, age = %s, gender = %s
+                UPDATE patients
+                SET first_name = %s, last_name = %s, dob = %s, gender = %s, phone = %s,
+                    email = %s, address = %s, emergency_contact_name = %s,
+                    emergency_contact_phone = %s, health_condition = %s, mobility_level = %s
                 WHERE user_id = %s
-            """, (name, age, gender, user_id))
+            """, (first_name, last_name, dob, gender, phone, email, address,
+                  emergency_contact_name, emergency_contact_phone, health_condition,
+                  mobility_level, user_id))
             mysql.connection.commit()
-
             flash("Profile updated successfully!", "success")
-            return redirect(url_for('patient.patient_dashboard'))
         except Exception as e:
             flash(f"Error: {str(e)}", "danger")
-            return redirect(url_for('patient.edit_profile'))
+        finally:
+            cur.close()
+
+        return redirect(url_for('patient.patient_dashboard'))
 
     # Retrieve current profile info
     cur = mysql.connection.cursor()
     cur.execute("SELECT * FROM patients WHERE user_id = %s", (user_id,))
     patient = cur.fetchone()
+    cur.close()
 
     return render_template('edit_profile.html', patient=patient)
 
-
-# View Patient Appointments (if applicable)
+# View Patient Appointments
 @patient_bp.route('/appointments')
 def view_appointments():
     """Display the list of appointments for the patient."""
@@ -79,56 +93,181 @@ def view_appointments():
     user_id = session.get('user_id')
 
     # Retrieve the patient's appointments
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM appointments WHERE patient_id = %s", (user_id,))
+    cur = mysql.connection.cursor(pymysql.cursors.DictCursor)
+    cur.execute("SELECT * FROM appointments WHERE patient_id = %s ORDER BY appointment_date ASC", (user_id,))
     appointments = cur.fetchall()
+    cur.close()
 
     return render_template('appointments.html', appointments=appointments)
 
+# View Available Classes
+@patient_bp.route('/view_classes', methods=['GET'])
+def view_classes():
+    """Displays a list of available classes."""
+    if 'role' not in session or session['role'] != 'patient':
+        return redirect(url_for('auth.login'))
 
-# Book an Appointment (if applicable)
-@patient_bp.route('/book_appointment', methods=['GET', 'POST'])
-def book_appointment():
-    """Allows patients to book an appointment."""
+    user_id = session.get('user_id')
+
+    # Fetch classes and check if the patient is enrolled
+    cur = mysql.connection.cursor(pymysql.cursors.DictCursor)
+    cur.execute("""
+        SELECT c.*,
+               CASE WHEN pc.patient_id IS NOT NULL THEN TRUE ELSE FALSE END AS booked
+        FROM classes c
+        LEFT JOIN patient_classes pc ON c.class_id = pc.class_id AND pc.patient_id = %s
+    """, (user_id,))
+    classes = cur.fetchall()
+    cur.close()
+
+    return render_template('patient_view_classes.html', classes=classes)
+
+
+# Book a Class
+@patient_bp.route('/book_class', methods=['POST'])
+def book_class():
+    """Allows a patient to book a class."""
+    if 'role' not in session or session['role'] != 'patient':
+        flash("Unauthorized access. Please log in as a patient.", "danger")
+        return redirect(url_for('auth.login'))
+
+    try:
+        patient_id = session.get('user_id')
+        class_id = request.form.get('class_id')
+
+        if not patient_id or not class_id:
+            flash("Invalid request. Missing patient or class information.", "danger")
+            return redirect(url_for('patient.view_classes'))
+
+        cur = mysql.connection.cursor()
+        # Check if the class is already booked
+        cur.execute("SELECT * FROM patient_classes WHERE patient_id = %s AND class_id = %s", (patient_id, class_id))
+        existing_booking = cur.fetchone()
+
+        if existing_booking:
+            flash("You have already booked this class.", "info")
+            return redirect(url_for('patient.view_classes'))
+
+        # Insert the booking into the database
+        cur.execute("INSERT INTO patient_classes (patient_id, class_id) VALUES (%s, %s)", (patient_id, class_id))
+        mysql.connection.commit()
+        flash("Class booked successfully!", "success")
+        return redirect(url_for('patient.view_classes'))
+
+    except Exception as e:
+        flash(f"An error occurred: {e}", "danger")
+        return redirect(url_for('patient.view_classes'))
+    finally:
+        cur.close()
+
+
+
+# Cancel a Class Booking
+@patient_bp.route('/cancel_booking', methods=['POST'])
+def cancel_booking():
+    """Allows a patient to cancel a class booking."""
+    if 'role' not in session or session['role'] != 'patient':
+        return redirect(url_for('auth.login'))
+
+    patient_id = session.get('user_id')
+    class_id = request.form.get('class_id')
+
+    cur = mysql.connection.cursor()
+    try:
+        # Remove the booking from the database
+        cur.execute("DELETE FROM patient_classes WHERE patient_id = %s AND class_id = %s", (patient_id, class_id))
+        mysql.connection.commit()
+        flash("Class reservation canceled successfully!", "success")
+    except Exception as e:
+        flash(f"Error canceling reservation: {str(e)}", "danger")
+    finally:
+        cur.close()
+
+    return redirect(url_for('patient.view_classes'))
+
+# Track Symptoms
+@patient_bp.route('/track_symptoms', methods=['GET', 'POST'])
+def track_symptoms():
+    """Allows patients to track symptoms."""
     if 'role' not in session or session['role'] != 'patient':
         return redirect(url_for('auth.login'))  # Redirect to login if not authenticated as patient
 
     if request.method == 'POST':
-        coach_id = request.form['coach_id']
-        appointment_date = request.form['appointment_date']
+        symptom = request.form.get('symptom')
+        severity = request.form.get('severity')
+        notes = request.form.get('notes')
 
         # Validate inputs
-        if not coach_id or not appointment_date:
-            flash("Both coach and appointment date are required.", "danger")
-            return redirect(url_for('patient.book_appointment'))
+        if not symptom or not severity:
+            flash("Symptom and severity are required.", "danger")
+            return redirect(url_for('patient.track_symptoms'))
 
-        # Insert the appointment into the database
+        # Insert the symptom into the database
         user_id = session.get('user_id')
-        cur = mysql.connection.cursor()
+        cur = mysql.connection.cursor(pymysql.cursors.DictCursor)
         try:
             cur.execute("""
-                INSERT INTO appointments (patient_id, coach_id, appointment_date)
-                VALUES (%s, %s, %s)
-            """, (user_id, coach_id, appointment_date))
-            current_app.mysql.connection.commit()
-
-            flash("Appointment booked successfully!", "success")
-            return redirect(url_for('patient.view_appointments'))
+                INSERT INTO symptoms (user_id, symptom, severity, notes, created_at)
+                VALUES (%s, %s, %s, %s, NOW())
+            """, (user_id, symptom, severity, notes))
+            mysql.connection.commit()
+            flash("Symptom tracked successfully!", "success")
         except Exception as e:
             flash(f"Error: {str(e)}", "danger")
-            return redirect(url_for('patient.book_appointment'))
+        finally:
+            cur.close()
 
-    # Get available coaches for booking an appointment
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM users WHERE role = 'coach'")
+        return redirect(url_for('patient.track_symptoms'))
+
+    return render_template('patient_track_symptoms.html')
+
+# Messages (Patient to Coach Communication)
+@patient_bp.route('/messages', methods=['GET', 'POST'])
+def messages():
+    """Allows patients to view and send messages."""
+    if 'role' not in session or session['role'] != 'patient':
+        return redirect(url_for('auth.login'))  # Redirect to login if not authenticated as patient
+
+    user_id = session.get('user_id')
+
+    cur = mysql.connection.cursor(pymysql.cursors.DictCursor)
+
+    if request.method == 'POST':
+        coach_id = request.form['coach_id']
+        message_content = request.form['message']
+
+        # Validate inputs
+        if not coach_id or not message_content:
+            flash("Both coach and message content are required.", "danger")
+            return redirect(url_for('patient.messages'))
+
+        # Insert the message into the database
+        try:
+            cur.execute("""
+                INSERT INTO messages (sender_id, receiver_id, message_content, sent_at)
+                VALUES (%s, %s, %s, NOW())
+            """, (user_id, coach_id, message_content))
+            mysql.connection.commit()
+            flash("Message sent successfully!", "success")
+        except Exception as e:
+            flash(f"Error: {str(e)}", "danger")
+
+    # Retrieve messages for the patient
+    cur.execute("""
+        SELECT messages.message_content, messages.sent_at,
+               users.username AS sender
+        FROM messages
+        JOIN users ON messages.sender_id = users.user_id
+        WHERE receiver_id = %s
+        ORDER BY messages.sent_at DESC
+    """, (user_id,))
+    received_messages = cur.fetchall()
+
+    # Fetch the list of coaches for messaging
+    cur.execute("""
+        SELECT user_id, username FROM users WHERE role = 'coach'
+    """)
     coaches = cur.fetchall()
+    cur.close()
 
-    return render_template('book_appointment.html', coaches=coaches)
-# Chat Room route (if separate from the admin chat)
-@patient_bp.route('/chat')
-def chat():
-    if 'logged_in' in session and session.get('role') == 'patient':
-        return render_template('chat_room.html')  # Render the chat room template
-    else:
-        return redirect(url_for('login'))
-
+    return render_template('patient_messages.html', messages=received_messages, coaches=coaches)
