@@ -11,30 +11,22 @@
         <h1 class="text-center">Welcome, {{ patient.name }}</h1>
 
         <!-- Patient Information Card -->
-        <div class="card">
+        <div class="card my-4">
             <div class="card-header">
-                <h3>Your Information</h3>
+                Your Information
             </div>
             <div class="card-body">
-                <p><strong>First Name:</strong> {{ patient.first_name }}</p>
-                <p><strong>Last Name:</strong> {{ patient.last_name }}</p>
-                <p><strong>Date of Birth:</strong> {{ patient.dob }}</p>
+                <p><strong>Name:</strong> {{ patient.name }}</p>
+                <p><strong>Age:</strong> {{ patient.age }}</p>
                 <p><strong>Gender:</strong> {{ patient.gender }}</p>
-                <p><strong>Phone:</strong> {{ patient.phone }}</p>
-                <p><strong>Email:</strong> {{ patient.email }}</p>
+                <p><strong>Contact Number:</strong> {{ patient.phone }}</p>
                 <p><strong>Address:</strong> {{ patient.address }}</p>
-                <p><strong>Emergency Contact Name:</strong> {{ patient.emergency_contact_name }}</p>
-                <p><strong>Emergency Contact Phone:</strong> {{ patient.emergency_contact_phone }}</p>
-                <p><strong>Health Condition:</strong> {{ patient.health_condition }}</p>
-                <p><strong>Mobility Level:</strong> {{ patient.mobility_level }}</p>
-            </div>
-            <div class="card-footer">
+                <p><strong>Medical History:</strong> {{ patient.health_condition }}</p>
                 <a href="{{ url_for('patient.edit_profile') }}" class="btn btn-primary">Edit Information</a>
             </div>
         </div>
-        
 
-        <!-- Upcoming Appointments Section -->
+        <!-- Appointments Section -->
         <h2>Upcoming Appointments</h2>
         {% if appointments %}
             <table class="table table-striped">
