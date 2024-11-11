@@ -13,9 +13,12 @@
                 <th>User ID</th>
                 <th>Username</th>
                 <th>First Name</th>
-                <th>DAte Of Birth</th>
-                <th>Diagnosis</th>
-                <th>Actions</th>
+                <th>Email</th>
+                <th>Phone Number</th>
+                <th>Address</th>
+                <th>Date Of Birth</th>
+                <th>Health_condition</th>
+
             </tr>
         </thead>
         <tbody>
@@ -26,9 +29,10 @@
                 <td>{{ patient.first_name }}</td>
                 <td>{{ patient.email }}</td>
                  <td>{{ patient.phone }}</td>
+                <td>{{ patient.address }}</td>
                 <td>{{ patient.dob }}</td>
                 <td>{{ patient.health_condition}}</td>
-                <td>{{ patient.address }}</td>
+
                 <td>
                     <a href="{{ url_for('admin.view_patient_profile', user_id=patient.user_id) }}">View</a>
                     <a href="{{ url_for('admin.edit_user', user_id=patient.user_id) }}" class="btn btn-sm btn-warning">Edit</a>

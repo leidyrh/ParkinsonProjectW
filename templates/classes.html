@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Classes</title>
+</head>
+<body>
+    <h2>Manage Classes</h2>
+
+    <!-- Section to Add New Class -->
+    <h3>Add New Class</h3>
+    <form action="{{ url_for('admin.manage_classes') }}" method="POST">
+        <div class="mb-3">
+            <label for="class_name" class="form-label">Class Name</label>
+            <input type="text" class="form-control" name="class_name" id="class_name" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <textarea class="form-control" name="description" id="description"></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label for="level" class="form-label">Level</label>
+            <select class="form-select" name="level" id="level" required>
+                <option value="one">One</option>
+                <option value="two">Two</option>
+                <option value="three">Three</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="duration" class="form-label">Duration (minutes)</label>
+            <input type="number" class="form-control" name="duration" id="duration" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="start_time" class="form-label">Start Time</label>
+            <input type="datetime-local" class="form-control" name="start_time" id="start_time" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="capacity" class="form-label">Capacity</label>
+            <input type="number" class="form-control" name="capacity" id="capacity" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="coach_id" class="form-label">Assign Coach (Optional)</label>
+            <input type="number" class="form-control" name="coach_id" id="coach_id" placeholder="Enter Coach ID">
+        </div>
+
+        <button type="submit" class="btn btn-primary">Add Class</button>
+    </form>
+
+    <!-- Section to Display Existing Classes -->
+    <h3>Existing Classes</h3>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Class Name</th>
+                <th>Level</th>
+                <th>Description</th>
+                <th>Duration</th>
+                <th>Start Time</th>
+                <th>Capacity</th>
+                <th>Coach ID</th>
+                <th>Registered Patients</th>
+                <th>Register Patient</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for class in classes %}
+                <tr>
+                    <td>{{ class.class_name }}</td>
+                    <td>{{ class.level }}</td>
+                    <td>{{ class.description }}</td>
+                    <td>{{ class.duration }} mins</td>
+                    <td>{{ class.start_time }}</td>
+                    <td>{{ class.capacity }}</td>
+                    <td>{{ class.coach_id or 'Unassigned' }}</td>
+                    <td>
+                        <ul>
+                            {% for patient in class_registrations[class.class_id] %}
+                                <li>{{ patient.first_name }} {{ patient.last_name }}</li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                    <td>
+                        <!-- Form to Register a Patient to This Class -->
+                        <form action="{{ url_for('admin.manage_classes') }}" method="POST">
+                            <input type="hidden" name="register_patient" value="1">
+                            <input type="hidden" name="class_id" value="{{ class.class_id }}">
+
+                            <label for="patient_id">Select Patient</label>
+                            <select name="patient_id" id="patient_id" class="form-select" required>
+                                {% for patient in patients %}
+                                    <option value="{{ patient.patient_id }}">{{ patient.first_name }} {{ patient.last_name }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-primary mt-2">Register</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+ <!-- Link back to Admin Dashboard at the bottom (optional) -->
+    <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-secondary">Back to Admin Dashboard</a>
+</body>
+</html>
