@@ -10,10 +10,9 @@
 
 <div class="container mt-5">
     <!-- logo -->
-    <div class="text-center mb-4">
-        <img src="{{ url_for('static', filename='KatzJCCLogo.png') }}" alt="Katz JCC Logo">
-    </div>
-
+     <div class="logo-container">
+        <img src="/static/KatzJCCLogo.png" alt="Katz JCC Logo"> <br><br>
+     </div>
     <h1>Admin Dashboard</h1>
 
     <!-- Flash messages -->
@@ -26,7 +25,6 @@
     {% endwith %}
 
     <div class="row mt-4">
-
         <!-- Create Patient Form -->
         <div class="col-md-6">
             <h3>Create New Patient</h3>
@@ -128,29 +126,7 @@
     <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary">Logout</a>
 </div>
 <!-- Edit User Form -->
-<div class="col-md-6">
-    <h3>Edit User</h3>
-    <form action="{{ url_for('admin.edit_user') }}" method="POST">
-        <div class="mb-3">
-            <label for="user_id" class="form-label">Select User</label>
-            <select class="form-select" name="user_id" id="user_id" required>
-                <option value="">Choose a user</option>
-                {% for user in users %}
-                    <option value="{{ user.user_id }}">{{ user.username }} ({{ user.role }})</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="mb-3">
-            <label for="username" class="form-label">New Username</label>
-            <input type="text" class="form-control" name="username" id="username" required>
-        </div>
-        <div class="mb-3">
-            <label for="password" class="form-label">New Password</label>
-            <input type="password" class="form-control" name="password" id="password" required>
-        </div>
-        <button type="submit" class="btn btn-warning">Update User</button>
-    </form>
-</div>
+
 
 
 </body>
