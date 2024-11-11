@@ -329,4 +329,3 @@ def view_patient_profile(user_id):
 
     # Pass `patient` to the template, not `patients`
     return render_template('admin_patient_profile.html', patient=patient)
-
