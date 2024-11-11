@@ -121,17 +121,12 @@
         </tbody>
     </table>
   <td>
-                    <a href="{{ url_for('admin.list_patients') }}"> List of Patients</a>
-                    </td>
-
-
-    <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary">Logout</a>
-</div>
-<div>
+    <a href="{{ url_for('auth.logout') }}" class="btn btn-danger btn-sm">Logout</a>
+    <a href="{{ url_for('admin.list_patients') }}" class="btn btn-secondary"> List of Patients</a>
+      <a href="{{ url_for('admin.list_coaches') }}" class="btn btn-secondary"> List of Coaches</a>
     <!-- Link to Manage Classes page -->
     <a href="{{ url_for('admin.manage_classes') }}" class="btn btn-primary"> Manage Classes</a>
-
+                    </td>
 </div>
-
 </body>
 </html>

@@ -247,6 +247,22 @@ def list_patients():
     cur.close()
     return render_template('admin_patients_list.html', patients=patients)
 
+# Route to list all coaches
+@admin_bp.route('/coaches')
+def list_coaches():
+    # Retrieve all patients from the database
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cur.execute("""
+            SELECT users.user_id, users.username, users.email, coach.first_name, coach.last_name, coach.specialization, 
+                   coach.phone
+            FROM users
+            JOIN coach ON users.user_id = coach.user_id
+            WHERE users.role = 'coach'
+        """)
+    coaches = cur.fetchall()
+    cur.close()
+    return render_template('admin_patients_list.html', patients=coaches)
+
 @admin_bp.route('/view_patient/<int:user_id>')
 def view_patient_profile(user_id):
     # Ensure the user is an admin
@@ -300,7 +316,7 @@ def manage_classes():
                 flash("Please fill in all required fields.", "danger")
                 return redirect(url_for('admin.manage_classes'))
 
-            # Insert the new class
+            # Insert the new class with the selected coach
             try:
                 cur.execute("""
                     INSERT INTO classes (class_name, description, level, duration, start_time, capacity, coach_id)
@@ -313,23 +329,80 @@ def manage_classes():
                 flash("An error occurred while adding the class.", "danger")
                 print("Error:", e)
 
+        elif 'edit_class' in request.form:  # Editing an existing class
+            class_id = request.form['class_id']
+            class_name = request.form['class_name']
+            description = request.form['description']
+            level = request.form['level']
+            duration = request.form['duration']
+            start_time = request.form['start_time']
+            capacity = request.form['capacity']
+            coach_id = request.form.get('coach_id')  # Coach selection
+
+            # Update the class with the new details
+            try:
+                cur.execute("""
+                            UPDATE classes 
+                            SET class_name = %s, description = %s, level = %s, 
+                                duration = %s, start_time = %s, capacity = %s, coach_id = %s
+                            WHERE class_id = %s
+                        """, (class_name, description, level, duration, start_time, capacity, coach_id, class_id))
+                mysql.connection.commit()
+                flash("Class updated successfully!", "success")
+            except Exception as e:
+                mysql.connection.rollback()
+                flash("An error occurred while updating the class.", "danger")
+                print("Error:", e)
+
         # Registering a patient to a class
         elif 'register_patient' in request.form:
             patient_id = request.form['patient_id']
             class_id = request.form['class_id']
 
-            # Insert registration into `patient_classes`
-            try:
-                cur.execute("""
-                    INSERT INTO patient_classes (patient_id, class_id)
-                    VALUES (%s, %s)
+            # Check if the patient is already registered
+            cur.execute("""
+                    SELECT * FROM patient_classes WHERE patient_id = %s AND class_id = %s
                 """, (patient_id, class_id))
-                mysql.connection.commit()
-                flash("Patient successfully registered to the class!", "success")
-            except Exception as e:
-                mysql.connection.rollback()
-                flash("An error occurred while registering the patient.", "danger")
-                print("Error:", e)
+            if cur.fetchone():
+                flash("Patient is already registered for this class.", "info")
+            else:
+                #Insert registration into `patient_classes`
+                try:
+                    cur.execute("""
+                        INSERT INTO patient_classes (patient_id, class_id)
+                        VALUES (%s, %s)
+                    """, (patient_id, class_id))
+                    mysql.connection.commit()
+                    flash("Patient successfully registered to the class!", "success")
+                except Exception as e:
+                    mysql.connection.rollback()
+                    flash("An error occurred while registering the patient.", "danger")
+                    print("Error:", e)
+            #assign a coach to a class
+        # Registering a patient to a class
+        elif 'assign_coach' in request.form:
+            coach_id = request.form['coach_id']
+            class_id = request.form['class_id']
+
+            # Check if the coach is already registered
+            cur.execute("""
+                        SELECT * FROM classes WHERE coach_id = %s AND class_id = %s
+                    """, (coach_id, class_id))
+            if cur.fetchone():
+                flash("Coach is already assigned for this class.", "info")
+            else:
+                # Insert registration into `classes`
+                try:
+                    cur.execute("""
+                            INSERT INTO classes (coach_id, class_id)
+                            VALUES (%s, %s)
+                        """, (coach_id, class_id))
+                    mysql.connection.commit()
+                    flash("Coach successfully assigned to the class!", "success")
+                except Exception as e:
+                    mysql.connection.rollback()
+                    flash("An error occurred", "danger")
+                    print("Error:", e)
 
     # Fetch all classes
     cur.execute("SELECT * FROM classes")
@@ -337,13 +410,23 @@ def manage_classes():
 
     # Fetch all patients for the registration dropdown
     cur.execute("""
-        SELECT patients.patient_id, users.username, users.email, patients.first_name, patients.dob, 
-               patients.gender, patients.phone, patients.mobility_level
-        FROM patients
-        JOIN users ON patients.user_id = users.user_id
-        WHERE users.role = 'patient'
-    """)
+            SELECT patients.patient_id, users.username, users.email, patients.first_name, patients.dob, 
+            patients.gender, patients.phone, patients.mobility_level
+            FROM patients
+            JOIN users ON patients.user_id = users.user_id
+            WHERE users.role = 'patient'
+            """)
     patients = cur.fetchall()
+
+    # Fetch all users with the role 'coach' for the coach dropdown
+    cur.execute("""
+            SELECT users.user_id, users.username, users.email, coach.first_name, coach.last_name, 
+            coach.specialization, coach.phone
+            FROM users
+            JOIN coach ON users.user_id = coach.user_id
+            WHERE users.role = 'coach'
+            """)
+    coaches = cur.fetchall()
 
     # Fetch registered patients for each class
     class_registrations = {}
@@ -358,6 +441,6 @@ def manage_classes():
 
     cur.close()
 
-    # Render the `classes.html` template with data
     return render_template('classes.html', classes=classes, patients=patients,
-                           class_registrations=class_registrations)
+                           class_registrations=class_registrations, coaches=coaches)
+
