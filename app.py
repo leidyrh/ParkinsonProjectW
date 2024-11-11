@@ -2,6 +2,7 @@ import pymysql
 pymysql.install_as_MySQLdb()
 from flask import Flask, redirect, url_for
 from flask_mysqldb import MySQL
+
 from config import Config  # or choose a different environment (e.g., ProductionConfig)
 
 mysql = MySQL()
@@ -36,3 +37,5 @@ def create_app():
 if __name__ == '__main__':
     app = create_app()
     app.run(debug=True)
+
+    print(app.url_map)
