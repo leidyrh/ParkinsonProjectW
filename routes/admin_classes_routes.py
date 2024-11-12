@@ -37,7 +37,7 @@ def manage_classes():
             # Insert the new class with the selected coach
             try:
                 cur.execute("""
-                    INSERT INTO classes (class_name, description, level, duration, start_time, capacity, user_id)
+                    INSERT INTO classes (class_name, description, level, duration, start_time, capacity, coach_id)
                     VALUES (%s, %s, %s, %s, %s, %s, %s)
                 """, (class_name, description, level, duration, start_time, capacity, coach_id))
                 mysql.connection.commit()
@@ -170,4 +170,69 @@ def manage_classes():
 
     return render_template('classes.html', classes=classes, patients=patients,
                            class_registrations=class_registrations, coaches=coaches)
+
+
+@admin_classes_bp.route('/edit_class/<int:class_id>', methods=['GET', 'POST'])
+def edit_class(class_id):
+    # Ensure the user is an admin
+    if 'user_id' not in session or session.get('role') != 'admin':
+        flash("You must be an admin to access this page.", "warning")
+        return redirect(url_for('auth.login'))
+
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+    if request.method == 'POST':
+        # Get updated class data from the form
+        class_name = request.form['class_name']
+        description = request.form['description']
+        level = request.form['level']
+        duration = request.form['duration']
+        start_time = request.form['start_time']
+        capacity = request.form['capacity']
+        coach_id = request.form.get('coach_id') or None  # Optional
+
+        try:
+            # Update the class details in the database
+            cur.execute("""
+                UPDATE classes
+                SET class_name = %s, description = %s, level = %s, duration = %s, start_time = %s, capacity = %s, coach_id = %s
+                WHERE class_id = %s
+            """, (class_name, description, level, duration, start_time, capacity, coach_id, class_id))
+            mysql.connection.commit()
+            flash("Class updated successfully!", "success")
+            return redirect(url_for('admin.manage_classes'))
+        except Exception as e:
+            mysql.connection.rollback()
+            flash("An error occurred while updating the class.", "danger")
+            print("Error:", e)
+
+    # Fetch the existing class details for the form
+    cur.execute("SELECT * FROM classes WHERE class_id = %s", (class_id,))
+    class_details = cur.fetchone()
+    cur.close()
+
+    return render_template('classes.html', class_details=class_details)
+
+
+@admin_classes_bp.route('/delete_class/<int:class_id>', methods=['POST'])
+def delete_class(class_id):
+    # Ensure the user is an admin
+    if 'user_id' not in session or session.get('role') != 'admin':
+        flash("You must be an admin to access this page.", "warning")
+        return redirect(url_for('auth.login'))
+
+    cur = mysql.connection.cursor()
+    try:
+        # Delete the class from the database
+        cur.execute("DELETE FROM classes WHERE class_id = %s", (class_id,))
+        mysql.connection.commit()
+        flash("Class deleted successfully!", "success")
+    except Exception as e:
+        mysql.connection.rollback()
+        flash("An error occurred while deleting the class.", "danger")
+        print("Error:", e)
+    finally:
+        cur.close()
+
+    return redirect(url_for('admin.manage_classes'))
 

@@ -11,11 +11,11 @@ def coach_dashboard():
     if 'role' not in session or session['role'] != 'coach':
         return redirect(url_for('auth.login'))  # Redirect to login if not authenticated as coach
 
-    user_id = session.get('user_id')
+    coach_id = session.get('user_id')
 
     # Get the coach's information from the database
     cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM coach WHERE user_id = %s", (user_id,))
+    cur.execute("SELECT * FROM coach WHERE coach_id = %s", (coach_id,))
     coach = cur.fetchone()
 
     if not coach:

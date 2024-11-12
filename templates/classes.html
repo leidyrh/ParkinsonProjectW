@@ -54,7 +54,7 @@
             <select class="form-control" name="coach_id" id="coach_id">
                 <option value="">Select a coach</option>
                 {% for coach in coaches %}
-                    <option value="{{ coach.user_id }}">{{ coach.first_name }} {{ coach.last_name }} ({{ coach.username }})</option>
+                    <option value="{{ coach.coach_id }}">{{ coach.last_name }} ({{ coach.username }})</option>
                 {% endfor %}
             </select>
         </div>
@@ -90,8 +90,8 @@
                     <td>
                         {% if class.coach_id %}
                             {% for coach in coaches %}
-                                {% if coach.user_id == class.coach_id %}
-                                    {{ coach.first_name }} {{ coach.last_name }}
+                                {% if coach.coach_id == class.coach_id %}
+                                    <li>{{ coach.last_name }} {{ coach.username}}</li>
                                 {% endif %}
                             {% endfor %}
                         {% else %}
