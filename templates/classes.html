@@ -3,62 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <title>Manage Classes</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
 <body>
+
+<div class="container mt-5">
     <h2>Manage Classes</h2>
 
-    <!-- Section to Add New Class -->
-    <h3>Add New Class</h3>
+    <!-- Add/Edit Class Form -->
+    <h4>Add New Class</h4>
     <form action="{{ url_for('admin.manage_classes') }}" method="POST">
-        <div class="mb-3">
-            <label for="class_name" class="form-label">Class Name</label>
+        <input type="hidden" name="add_class" value="1">
+
+        <div class="form-group">
+            <label for="class_name">Class Name</label>
             <input type="text" class="form-control" name="class_name" id="class_name" required>
         </div>
 
-        <div class="mb-3">
-            <label for="description" class="form-label">Description</label>
+        <div class="form-group">
+            <label for="description">Description</label>
             <textarea class="form-control" name="description" id="description"></textarea>
         </div>
 
-        <div class="mb-3">
-            <label for="level" class="form-label">Level</label>
-            <select class="form-select" name="level" id="level" required>
+        <div class="form-group">
+            <label for="level">Level</label>
+            <select class="form-control" name="level" id="level" required>
                 <option value="one">One</option>
                 <option value="two">Two</option>
                 <option value="three">Three</option>
             </select>
         </div>
 
-        <div class="mb-3">
-            <label for="duration" class="form-label">Duration (minutes)</label>
+        <div class="form-group">
+            <label for="duration">Duration (minutes)</label>
             <input type="number" class="form-control" name="duration" id="duration" required>
         </div>
 
-        <div class="mb-3">
-            <label for="start_time" class="form-label">Start Time</label>
+        <div class="form-group">
+            <label for="start_time">Start Time</label>
             <input type="datetime-local" class="form-control" name="start_time" id="start_time" required>
         </div>
 
-        <div class="mb-3">
-            <label for="capacity" class="form-label">Capacity</label>
+        <div class="form-group">
+            <label for="capacity">Capacity</label>
             <input type="number" class="form-control" name="capacity" id="capacity" required>
         </div>
 
-        <div class="mb-3">
-            <label for="coach_id" class="form-label">Assign Coach</label>
-            <select name="coach_id" id="coach_id" class="form-select">
-            <option value="" selected>-- Select a Coach --</option>
-            {% for coach in coach %}
-                <option value="{{ coach.user_id }}">{{ coach.username }}</option>
-            {% endfor %}
-        </select>
-    </div>
+        <div class="form-group">
+            <label for="coach_id">Assign Coach (Optional)</label>
+            <select class="form-control" name="coach_id" id="coach_id">
+                <option value="">Select a coach</option>
+                {% for coach in coaches %}
+                    <option value="{{ coach.user_id }}">{{ coach.first_name }} {{ coach.last_name }} ({{ coach.username }})</option>
+                {% endfor %}
+            </select>
+        </div>
 
         <button type="submit" class="btn btn-primary">Add Class</button>
     </form>
 
-    <!-- Section to Display Existing Classes -->
-    <h3>Existing Classes</h3>
+    <!-- Classes Table with Registration and Coach Assignment Options -->
+    <h4 class="mt-5">Existing Classes</h4>
     <table class="table table-striped">
         <thead>
             <tr>
@@ -68,10 +73,9 @@
                 <th>Duration</th>
                 <th>Start Time</th>
                 <th>Capacity</th>
-                <th>Coach ID</th>
+                <th>Assigned Coach</th>
                 <th>Registered Patients</th>
-                <th>Register Patient</th>
-                <th>Assign Coach</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -83,7 +87,17 @@
                     <td>{{ class.duration }} mins</td>
                     <td>{{ class.start_time }}</td>
                     <td>{{ class.capacity }}</td>
-                    <td>{{ class.coach_id or 'Unassigned' }}</td>
+                    <td>
+                        {% if class.coach_id %}
+                            {% for coach in coaches %}
+                                {% if coach.user_id == class.coach_id %}
+                                    {{ coach.first_name }} {{ coach.last_name }}
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <em>Not Assigned</em>
+                        {% endif %}
+                    </td>
                     <td>
                         <ul>
                             {% for patient in class_registrations[class.class_id] %}
@@ -92,38 +106,44 @@
                         </ul>
                     </td>
                     <td>
-                        <!-- Form to Register a Patient to This Class -->
-                        <form action="{{ url_for('admin.manage_classes') }}" method="POST">
+                        <!-- Form to Edit Class -->
+                        <form action="{{ url_for('admin.manage_classes') }}" method="POST" class="mb-2">
+                            <input type="hidden" name="edit_class" value="1">
+                            <input type="hidden" name="class_id" value="{{ class.class_id }}">
+                            <button type="submit" class="btn btn-warning btn-sm">Edit</button>
+                        </form>
+
+                        <!-- Form to Register Patient -->
+                        <form action="{{ url_for('admin.manage_classes') }}" method="POST" class="mb-2">
                             <input type="hidden" name="register_patient" value="1">
                             <input type="hidden" name="class_id" value="{{ class.class_id }}">
-
-                            <label for="patient_id">Select Patient</label>
-                            <select name="patient_id" id="patient_id" class="form-select" required>
+                            <select name="patient_id" class="form-control mb-2" required>
+                                <option value="">Select Patient</option>
                                 {% for patient in patients %}
-                                    <option value="{{ patient.patient_id }}">{{ patient.first_name }} {{ patient.last_name }}</option>
+                                    <option value="{{ patient.patient_id }}">{{ patient.first_name }} {{ patient.last_name }} ({{ patient.username }})</option>
                                 {% endfor %}
                             </select>
-                            <button type="submit" class="btn btn-primary mt-2">Register</button>
+                            <button type="submit" class="btn btn-info btn-sm">Register Patient</button>
+                        </form>
 
-                                </form>
-                                <form action="{{ url_for('admin.manage_classes') }}" method="POST">
-                                    <input type="hidden" name="assign_coach" value="1">
-                                    <input type="hidden" name="class_id" value="{{ class.class_id }}">
-
-                                    <label for="coach_id">Select Coach</label>
-                                    <select name="coach_id" id="coach_id" class="form-select" required>
-                                        {% for coach in coach %}
-                                            <option value="{{ coach.coach_id }}">{{ coach.username }}{{ coach.last_name }} </option>
-                                        {% endfor %}
-                                    </select>
-                                    <button type="submit" class="btn btn-primary mt-2">Register</button>
-                                    </form>
-
+                        <!-- Form to Assign Coach -->
+                        <form action="{{ url_for('admin.manage_classes') }}" method="POST">
+                            <input type="hidden" name="assign_coach" value="1">
+                            <input type="hidden" name="class_id" value="{{ class.class_id }}">
+                            <select name="coach_id" class="form-control mb-2" required>
+                                <option value="">Select Coach</option>
+                                {% for coach in coaches %}
+                                    <option value="{{ coach.user_id }}">{{ coach.first_name }} {{ coach.last_name }} ({{ coach.username }})</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-success btn-sm">Assign Coach</button>
+                        </form>
                     </td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
+</div>
 
  <!-- Link back to Admin Dashboard at the bottom (optional) -->
     <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-secondary">Back to Admin Dashboard</a>

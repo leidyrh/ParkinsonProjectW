@@ -98,17 +98,38 @@ def admin_dashboard():
                         flash("Patient role assigned successfully!", "success")
 
                 elif new_role == 'coach':
-                    # Check if the coach record already exists
-                    cur.execute("SELECT * FROM coach WHERE user_id = %s", (user_id,))
+                    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+                    # Fetch the username from the `users` table
+                    cur.execute("SELECT username FROM users WHERE user_id = %s", (user_id,))
+                    user = cur.fetchone()
+
+                    if not user:
+                        flash("User not found.", "danger")
+                        return redirect(url_for('admin.manage_classes'))
+
+                    username = user['username']
+
+                    # Check if the username already exists in the `coach` table
+                    cur.execute("SELECT * FROM coach WHERE username = %s", (username,))
                     existing_coach = cur.fetchone()
 
                     if existing_coach:
-                        flash("This user is already a coach.", "info")
-                    else:
-                        # Insert into coach table
-                        cur.execute("INSERT INTO coach (user_id) VALUES (%s)",
-                                    (user_id))
-                        flash("Coach role assigned successfully!", "success")
+                        flash("This user is already assigned as a coach or the username is already in use.", "danger")
+                        return redirect(url_for('admin.manage_classes'))
+
+                    # Insert the new coach
+                    try:
+                        cur.execute("""
+                                    INSERT INTO coach (user_id, username)
+                                    VALUES (%s, %s)
+                                """, (user_id, username))
+                        mysql.connection.commit()
+                        flash("User successfully assigned as a coach!", "success")
+                    except Exception as e:
+                        mysql.connection.rollback()
+                        flash("An error occurred while assigning the role.", "danger")
+                        print("Error:", e)
 
                 # Commit transaction and update role in users table
                 mysql.connection.commit()
@@ -303,13 +324,14 @@ def manage_classes():
     # Check if the request is for adding a class or registering a patient
     if request.method == 'POST':
         if 'add_class' in request.form:  # Adding a new class
+
             class_name = request.form['class_name']
             description = request.form['description']
             level = request.form['level']
             duration = request.form['duration']
             start_time = request.form['start_time']
             capacity = request.form['capacity']
-            coach_id = request.form.get('coach_id')  # Optional
+            coach_id = request.form.get('coach_id') or None # Optional
 
             # Validate required fields
             if not class_name or not level or not duration or not start_time or not capacity:
