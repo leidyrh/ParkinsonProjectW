@@ -269,7 +269,7 @@ def list_patients():
     return render_template('admin_patients_list.html', patients=patients)
 
 # Route to list all coaches
-@admin_bp.route('/coaches')
+@admin_bp.route('/list_coaches', methods=['GET'])
 def list_coaches():
     # Retrieve all patients from the database
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -282,7 +282,7 @@ def list_coaches():
         """)
     coaches = cur.fetchall()
     cur.close()
-    return render_template('admin_patients_list.html', patients=coaches)
+    return render_template('admin_coaches_list.html', coaches=coaches)
 
 @admin_bp.route('/view_patient/<int:user_id>')
 def view_patient_profile(user_id):
@@ -406,19 +406,28 @@ def manage_classes():
             coach_id = request.form['coach_id']
             class_id = request.form['class_id']
 
-            # Check if the coach is already registered
-            cur.execute("""
-                        SELECT * FROM classes WHERE coach_id = %s AND class_id = %s
-                    """, (coach_id, class_id))
-            if cur.fetchone():
+            # Verify the `coach_id` exists in the `coach` table
+            cur.execute("SELECT coach_id FROM coach WHERE coach_id = %s", (coach_id,))
+            coach_exists = cur.fetchone()
+
+            if not coach_exists:
+                flash("The selected coach does not exist.", "danger")
+                return redirect(url_for('admin.manage_classes'))
+
+            # Check if the class already has this coach assigned
+            cur.execute("SELECT coach_id FROM classes WHERE class_id = %s", (class_id,))
+            current_assignment = cur.fetchone()
+
+            if current_assignment and current_assignment['coach_id'] == coach_id:
                 flash("Coach is already assigned for this class.", "info")
             else:
-                # Insert registration into `classes`
+                # Update the `coach_id` for the existing class
                 try:
                     cur.execute("""
-                            INSERT INTO classes (coach_id, class_id)
-                            VALUES (%s, %s)
-                        """, (coach_id, class_id))
+                                    UPDATE classes
+                                    SET coach_id = %s
+                                    WHERE class_id = %s
+                                """, (coach_id, class_id))
                     mysql.connection.commit()
                     flash("Coach successfully assigned to the class!", "success")
                 except Exception as e:
