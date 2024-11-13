@@ -99,6 +99,12 @@ def manage_classes():
                 flash("An error occurred while deleting the class and its dependencies.", "danger")
                 print("Error:", e)
 
+            manage_notification(
+                action='delete',
+                notification_id=5
+            )
+
+
         # Registering a patient to a class
         elif 'register_patient' in request.form:
             patient_id = request.form['patient_id']
@@ -123,6 +129,17 @@ def manage_classes():
                     mysql.connection.rollback()
                     flash("An error occurred while registering the patient.", "danger")
                     print("Error:", e)
+
+            # After registering the patient to a class
+            # Send a notification to the patient
+            class_name = "Example Class Name"  # Replace with actual class name
+            start_time = "Example Start Time"  # Replace with actual start time
+            manage_notification(
+                action='send',
+                patient_id=patient_id,
+                class_id=class_id,
+                message=f"You have been registered for the class {class_name} on {start_time}."
+            )
 
         #assign a coach to a class
         elif 'assign_coach' in request.form:
@@ -157,6 +174,12 @@ def manage_classes():
                     mysql.connection.rollback()
                     flash("An error occurred", "danger")
                     print("Error:", e)
+
+            manage_notification(
+                action='update',
+                notification_id=5,
+                message="The class timing has changed to 10:00 AM."
+            )
 
     # Fetch all classes
     cur.execute("SELECT * FROM classes")
@@ -197,3 +220,83 @@ def manage_classes():
 
     return render_template('classes.html', classes=classes, patients=patients,
                            class_registrations=class_registrations, coaches=coaches)
+
+
+def manage_notification(action, patient_id=None, class_id=None, notification_type=None, message=None,
+                        notification_id=None):
+    """
+    Manage notifications by performing different actions:
+    - 'send': Send a notification to a patient
+    - 'update': Update the content of a notification
+    - 'mark_as_read': Mark a notification as read
+    - 'delete': Delete a notification
+    """
+    cur = mysql.connection.cursor()
+
+    try:
+        if action == 'send':
+            # Send a new notification
+            if patient_id and class_id and notification_type and message:
+                cur.execute("""
+                    INSERT INTO notifications (patient_id, class_id, notification_type, message, notification_status)
+                    VALUES (%s, %s, %s, %s, 'Pending')
+                """, (patient_id, class_id, notification_type, message))
+                flash("Notification sent successfully!", "success")
+            else:
+                flash("Missing data to send notification.", "danger")
+
+        elif action == 'update':
+            # Update an existing notification's message or status
+            if notification_id and (message or notification_type):
+                query = "UPDATE notifications SET "
+                values = []
+
+                if message:
+                    query += "message = %s, "
+                    values.append(message)
+                if notification_type:
+                    query += "notification_type = %s, "
+                    values.append(notification_type)
+
+                # Remove trailing comma and add WHERE clause
+                query = query.rstrip(', ') + " WHERE notification_id = %s"
+                values.append(notification_id)
+
+                cur.execute(query, values)
+                flash("Notification updated successfully!", "success")
+            else:
+                flash("Missing data to update notification.", "danger")
+
+        elif action == 'mark_as_read':
+            # Mark a notification as read
+            if notification_id:
+                cur.execute("""
+                    UPDATE notifications
+                    SET notification_status = 'Read'
+                    WHERE notification_id = %s
+                """, (notification_id,))
+                flash("Notification marked as read.", "success")
+            else:
+                flash("Notification ID is required to mark as read.", "danger")
+
+        elif action == 'delete':
+            # Delete a notification
+            if notification_id:
+                cur.execute("DELETE FROM notifications WHERE notification_id = %s", (notification_id,))
+                flash("Notification deleted successfully!", "success")
+            else:
+                flash("Notification ID is required to delete.", "danger")
+
+        else:
+            flash("Invalid action provided for notification management.", "danger")
+
+        # Commit the transaction if all is well
+        mysql.connection.commit()
+
+    except Exception as e:
+        mysql.connection.rollback()
+        flash("An error occurred with notification management.", "danger")
+        print("Error:", e)
+
+    finally:
+        cur.close()

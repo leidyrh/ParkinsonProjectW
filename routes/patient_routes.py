@@ -2,6 +2,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from app import mysql
 import pymysql
 
+from routes.admin_classes_routes import manage_notification
+
 # Create the Blueprint for patient-related routes
 patient_bp = Blueprint('patient', __name__, url_prefix='/patient')
 
@@ -14,17 +16,42 @@ def patient_dashboard():
 
     user_id = session.get('user_id')
 
-    # Get the patient's information from the database
+    # Get the patient's information and notifications from the database
     cur = mysql.connection.cursor(pymysql.cursors.DictCursor)
-    cur.execute("SELECT * FROM patients WHERE user_id = %s", (user_id,))
-    patient = cur.fetchone()
-    cur.close()
 
-    if not patient:
-        flash("Patient not found!", "danger")
+    try:
+        # Fetch the patient's information
+        cur.execute("SELECT * FROM patients WHERE user_id = %s", (user_id,))
+        patient = cur.fetchone()
+        if not patient:
+            flash("Patient not found!", "danger")
+            return redirect(url_for('home'))
+
+            # Fetch unread notifications for the patient
+        cur.execute("""
+            SELECT notification_id, notification_type, message, notification_status, notification_date
+            FROM notifications
+            WHERE patient_id = %s AND notification_status != 'Read'
+            ORDER BY notification_date DESC
+            LIMIT 5
+        """, (patient['patient_id'],))
+        notifications = cur.fetchall()
+    except pymysql.err.ProgrammingError as e:
+        print("Error:", e)
+        flash("An error occurred while fetching data.", "danger")
         return redirect(url_for('home'))
 
-    return render_template('patient_dashboard.html', patient=patient)
+    finally:
+            cur.close()
+
+    return render_template('patient_dashboard.html', patient=patient, notifications=notifications)
+
+@patient_bp.route('/mark_notification_as_read/<int:notification_id>', methods=['POST'])
+def mark_notification_as_read(notification_id):
+    """Marks a notification as read."""
+    manage_notification(action='mark_as_read', notification_id=notification_id)
+    return redirect(url_for('patient_dashboard'))
+
 
 # Edit Patient Profile
 @patient_bp.route('/edit_profile', methods=['GET', 'POST'])
