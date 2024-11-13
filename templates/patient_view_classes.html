@@ -43,13 +43,15 @@
                                         <input type="hidden" name="class_id" value="{{ class['class_id'] }}">
                                         <button type="submit" class="btn btn-danger">Cancel Reservation</button>
                                     </form>
+                                {% elif class['capacity'] == 0 %}
+                                    <!-- Class Full -->
+                                    <button class="btn btn-secondary" disabled>Class Full</button>
                                 {% else %}
                                     <!-- Book Class -->
                                     <form action="{{ url_for('patient.book_class') }}" method="POST">
                                         <input type="hidden" name="class_id" value="{{ class['class_id'] }}">
                                         <button type="submit" class="btn btn-primary">Book</button>
                                     </form>
-                                    
                                 {% endif %}
                             </td>
                         </tr>
