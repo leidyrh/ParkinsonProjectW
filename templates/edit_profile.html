@@ -52,10 +52,6 @@
         <input type="text" id="health_condition" name="health_condition" value="{{ patient.health_condition }}">
         <br>
 
-        <label for="mobility_level">Mobility Level:</label>
-        <input type="text" id="mobility_level" name="mobility_level" value="{{ patient.mobility_level }}">
-        <br>
-
         <button type="submit">Save Changes</button>
     </form>
     <a href="{{ url_for('patient.patient_dashboard') }}">Back to Dashboard</a>

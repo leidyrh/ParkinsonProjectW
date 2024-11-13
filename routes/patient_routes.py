@@ -27,7 +27,7 @@ def patient_dashboard():
             flash("Patient not found!", "danger")
             return redirect(url_for('home'))
 
-            # Fetch unread notifications for the patient
+        # Fetch unread notifications for the patient
         cur.execute("""
             SELECT notification_id, notification_type, message, notification_status, notification_date
             FROM notifications
@@ -40,11 +40,11 @@ def patient_dashboard():
         print("Error:", e)
         flash("An error occurred while fetching data.", "danger")
         return redirect(url_for('home'))
-
     finally:
-            cur.close()
+        cur.close()
 
     return render_template('patient_dashboard.html', patient=patient, notifications=notifications)
+
 
 @patient_bp.route('/mark_notification_as_read/<int:notification_id>', methods=['POST'])
 def mark_notification_as_read(notification_id):
@@ -56,7 +56,7 @@ def mark_notification_as_read(notification_id):
 # Edit Patient Profile
 @patient_bp.route('/edit_profile', methods=['GET', 'POST'])
 def edit_profile():
-    """Allows patients to edit their profile information."""
+    """Allows patients to edit their profile information, except for mobility level."""
     if 'role' not in session or session['role'] != 'patient':
         return redirect(url_for('auth.login'))  # Redirect to login if not authenticated as patient
 
@@ -74,7 +74,6 @@ def edit_profile():
         emergency_contact_name = request.form.get('emergency_contact_name')
         emergency_contact_phone = request.form.get('emergency_contact_phone')
         health_condition = request.form.get('health_condition')
-        mobility_level = request.form.get('mobility_level')
 
         # Validate required fields
         if not first_name or not last_name or not email:
@@ -88,11 +87,11 @@ def edit_profile():
                 UPDATE patients
                 SET first_name = %s, last_name = %s, dob = %s, gender = %s, phone = %s,
                     email = %s, address = %s, emergency_contact_name = %s,
-                    emergency_contact_phone = %s, health_condition = %s, mobility_level = %s
+                    emergency_contact_phone = %s, health_condition = %s
                 WHERE user_id = %s
             """, (first_name, last_name, dob, gender, phone, email, address,
                   emergency_contact_name, emergency_contact_phone, health_condition,
-                  mobility_level, user_id))
+                  user_id))
             mysql.connection.commit()
             flash("Profile updated successfully!", "success")
         except Exception as e:
@@ -109,6 +108,7 @@ def edit_profile():
     cur.close()
 
     return render_template('edit_profile.html', patient=patient)
+
 
 # View Patient Appointments
 @patient_bp.route('/appointments')
@@ -140,7 +140,8 @@ def view_classes():
     cur = mysql.connection.cursor(pymysql.cursors.DictCursor)
     cur.execute("""
         SELECT c.*,
-               CASE WHEN pc.patient_id IS NOT NULL THEN TRUE ELSE FALSE END AS booked
+               CASE WHEN pc.patient_id IS NOT NULL THEN TRUE ELSE FALSE END AS booked,
+               c.capacity AS remaining_capacity
         FROM classes c
         LEFT JOIN patient_classes pc ON c.class_id = pc.class_id AND pc.patient_id = %s
     """, (user_id,))
@@ -150,10 +151,11 @@ def view_classes():
     return render_template('patient_view_classes.html', classes=classes)
 
 
+
 # Book a Class
 @patient_bp.route('/book_class', methods=['POST'])
 def book_class():
-    """Allows a patient to book a class."""
+    """Allows a patient to book a class and decreases the class capacity."""
     if 'role' not in session or session['role'] != 'patient':
         flash("Unauthorized access. Please log in as a patient.", "danger")
         return redirect(url_for('auth.login'))
@@ -167,6 +169,7 @@ def book_class():
             return redirect(url_for('patient.view_classes'))
 
         cur = mysql.connection.cursor()
+
         # Check if the class is already booked
         cur.execute("SELECT * FROM patient_classes WHERE patient_id = %s AND class_id = %s", (patient_id, class_id))
         existing_booking = cur.fetchone()
@@ -175,24 +178,34 @@ def book_class():
             flash("You have already booked this class.", "info")
             return redirect(url_for('patient.view_classes'))
 
-        # Insert the booking into the database
+        # Check class capacity
+        cur.execute("SELECT capacity FROM classes WHERE class_id = %s", (class_id,))
+        class_info = cur.fetchone()
+
+        if not class_info or class_info['capacity'] <= 0:
+            flash("The class is fully booked.", "danger")
+            return redirect(url_for('patient.view_classes'))
+
+        # Insert the booking into the database and decrease class capacity
         cur.execute("INSERT INTO patient_classes (patient_id, class_id) VALUES (%s, %s)", (patient_id, class_id))
+        cur.execute("UPDATE classes SET capacity = capacity - 1 WHERE class_id = %s", (class_id,))
         mysql.connection.commit()
         flash("Class booked successfully!", "success")
-        return redirect(url_for('patient.view_classes'))
 
     except Exception as e:
         flash(f"An error occurred: {e}", "danger")
-        return redirect(url_for('patient.view_classes'))
     finally:
         cur.close()
+
+    return redirect(url_for('patient.view_classes'))
+
 
 
 
 # Cancel a Class Booking
 @patient_bp.route('/cancel_booking', methods=['POST'])
 def cancel_booking():
-    """Allows a patient to cancel a class booking."""
+    """Allows a patient to cancel a class booking and increases the class capacity."""
     if 'role' not in session or session['role'] != 'patient':
         return redirect(url_for('auth.login'))
 
@@ -201,8 +214,9 @@ def cancel_booking():
 
     cur = mysql.connection.cursor()
     try:
-        # Remove the booking from the database
+        # Remove the booking from the database and increase class capacity
         cur.execute("DELETE FROM patient_classes WHERE patient_id = %s AND class_id = %s", (patient_id, class_id))
+        cur.execute("UPDATE classes SET capacity = capacity + 1 WHERE class_id = %s", (class_id,))
         mysql.connection.commit()
         flash("Class reservation canceled successfully!", "success")
     except Exception as e:
@@ -211,6 +225,7 @@ def cancel_booking():
         cur.close()
 
     return redirect(url_for('patient.view_classes'))
+
 
 # Track Symptoms
 @patient_bp.route('/track_symptoms', methods=['GET', 'POST'])
