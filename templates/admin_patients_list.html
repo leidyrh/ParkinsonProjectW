@@ -3,18 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <title>Admin - List of Patients</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/liststyle.css') }}">
 </head>
 <body>
     <h1>List of Patients</h1>
     <a href="{{ url_for('admin.admin_dashboard') }}">Add New Patient</a>
-    <table border="1">
+    <table >
         <thead>
             <tr>
                 <th>User ID</th>
                 <th>Username</th>
                 <th>First Name</th>
-                <th>DAte Of Birth</th>
-                <th>Diagnosis</th>
+                <th>Email</th>
+                <th>Phone Number</th>
+                <th>Date of Birth</th>
+                <th>Health Condition</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -28,15 +31,14 @@
                  <td>{{ patient.phone }}</td>
                 <td>{{ patient.dob }}</td>
                 <td>{{ patient.health_condition}}</td>
-                <td>{{ patient.address }}</td>
                 <td>
                     <a href="{{ url_for('admin.view_patient_profile', user_id=patient.user_id) }}">View</a>
-                    <a href="{{ url_for('admin.edit_user', user_id=patient.user_id) }}" class="btn btn-sm btn-warning">Edit</a>
+
                     <!-- Delete User Form -->
                     <form action="{{ url_for('admin.admin_dashboard') }}" method="POST" style="display:inline;">
                         <input type="hidden" name="action" value="delete_user">
                         <input type="hidden" name="user_id" value="{{ patient.user_id }}">
-                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        <button type="submit" class="delete">Delete</button>
                     </form>
                     <!-- Additional links for edit or delete could be added here -->
                 </td>
@@ -46,6 +48,7 @@
     </table>
 
     <a href="{{ url_for('admin.admin_dashboard') }}">Back to Dashboard</a>
-
+    
+    
 </body>
 </html>

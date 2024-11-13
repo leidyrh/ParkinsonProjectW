@@ -50,6 +50,7 @@ def login():
                 session['user_id'] = user['user_id']
                 session['role'] = user['role']
                 session['username'] = user['username']
+
                 if user['role'] == 'admin':
                     return redirect(url_for('admin.admin_dashboard'))
                 elif user['role'] == 'coach':

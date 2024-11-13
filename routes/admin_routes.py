@@ -86,89 +86,100 @@ def admin_dashboard():
                         return redirect(url_for('admin.admin_dashboard'))
 
                 elif new_role == 'patient':
-                    # Check if the patient record already exists
-                    cur.execute("SELECT * FROM patients WHERE user_id = %s", (user_id))
+                    # Check if the user is currently a coach and remove them from the `coach` table
+                    cur.execute("SELECT * FROM coach WHERE coach_id = %s", (user_id,))
+                    existing_coach = cur.fetchone()
+
+                    if existing_coach:
+                        try:
+                            cur.execute("DELETE FROM coach WHERE coach_id = %s", (user_id,))
+                            mysql.connection.commit()
+                            flash("User removed from coach role.", "info")
+                        except Exception as e:
+                            mysql.connection.rollback()
+                            flash("An error occurred while removing the coach role.", "danger")
+                            print("Error:", e)
+                            return redirect(url_for('admin.manage_classes'))
+
+                    # Check if the user is already a patient
+                    cur.execute("SELECT * FROM patients WHERE user_id = %s", (user_id,))
                     existing_patient = cur.fetchone()
 
                     if existing_patient:
                         flash("This user is already a patient.", "info")
                     else:
-                        # Insert user into patients table
-                        cur.execute("INSERT INTO patients (user_id) VALUES (%s)", (user_id,))
-                        flash("Patient role assigned successfully!", "success")
+                        try:
+                            # Insert user into patients table
+                            cur.execute("INSERT INTO patients (user_id) VALUES (%s)", (user_id,))
+                            mysql.connection.commit()  # Commit the transaction
+                            flash("Patient role assigned successfully!", "success")
+                        except Exception as e:
+                            mysql.connection.rollback()  # Rollback in case of error
+                            flash("An error occurred while assigning the patient role.", "danger")
+                            print("Error:", e)
+                            return redirect(url_for('admin.manage_classes'))
+
+                    # Update the role in the `users` table to 'patient'
+                    try:
+                        cur.execute("UPDATE users SET role = %s WHERE user_id = %s", ('patient', user_id))
+                        mysql.connection.commit()  # Commit the transaction
+                        flash("User role updated to patient in users table.", "success")
+                    except Exception as e:
+                        mysql.connection.rollback()  # Rollback in case of error
+                        flash("An error occurred while updating the user role.", "danger")
+                        print("Error:", e)
 
                 elif new_role == 'coach':
-                    # Check if the coach record already exists
-                    cur.execute("SELECT * FROM coach WHERE user_id = %s", (user_id,))
+                    # Check if the user is currently a patient and remove them from the `patients` table
+                    cur.execute("SELECT * FROM patients WHERE user_id = %s", (user_id,))
+                    existing_patient = cur.fetchone()
+
+                    if existing_patient:
+                        try:
+                            cur.execute("DELETE FROM patients WHERE user_id = %s", (user_id,))
+                            mysql.connection.commit()
+                            flash("User removed from patient role.", "info")
+                        except Exception as e:
+                            mysql.connection.rollback()
+                            flash("An error occurred while removing the patient role.", "danger")
+                            print("Error:", e)
+                            return redirect(url_for('admin.manage_classes'))
+
+                    # Check if the user is already a coach
+                    cur.execute("SELECT * FROM coach WHERE coach_id = %s", (user_id,))
                     existing_coach = cur.fetchone()
 
                     if existing_coach:
                         flash("This user is already a coach.", "info")
                     else:
-                        # Insert into coach table
-                        cur.execute("INSERT INTO coach (user_id) VALUES (%s)",
-                                    (user_id))
-                        flash("Coach role assigned successfully!", "success")
+                        try:
+                            # Insert user into coach table
+                            cur.execute(
+                                "INSERT INTO coach (coach_id, username) SELECT user_id, username FROM users WHERE user_id = %s",
+                                (user_id,))
+                            mysql.connection.commit()  # Commit the transaction
+                            flash("Coach role assigned successfully!", "success")
+                        except Exception as e:
+                            mysql.connection.rollback()  # Rollback in case of error
+                            flash("An error occurred while assigning the coach role.", "danger")
+                            print("Error:", e)
+                            return redirect(url_for('admin.manage_classes'))
+
+                    # Update the role in the `users` table to 'coach'
+                    try:
+                        cur.execute("UPDATE users SET role = %s WHERE user_id = %s", ('coach', user_id))
+                        mysql.connection.commit()  # Commit the transaction
+                        flash("User role updated to coach in users table.", "success")
+                    except Exception as e:
+                        mysql.connection.rollback()  # Rollback in case of error
+                        flash("An error occurred while updating the user role.", "danger")
+                        print("Error:", e)
 
                 # Commit transaction and update role in users table
                 mysql.connection.commit()
                 cur.execute("UPDATE users SET role = %s WHERE user_id = %s", (new_role, user_id))
                 mysql.connection.commit()
                 flash('User role updated successfully!', 'success')
-
-            # elif action == 'assign_role':
-            #     # Assign a new role to an existing user
-            #     user_id = request.form['user_id']
-            #     new_role = request.form['new_role']
-            #     MAX_ADMINS = 5
-            #     # # Ensure the new role is either 'patient' or 'coach' (not 'admin')
-            #     # if new_role not in ['patient', 'coach']:
-            #     #     flash('Only "patient" or "coach" roles can be assigned.', 'danger')
-            #     #     return redirect(url_for('admin.admin_dashboard'))
-            #         # Ensure the new role is either 'patient' or 'coach' or check if adding 'admin'
-            #     if new_role == 'admin':
-            #         # Count the number of existing admins
-            #         cur.execute("SELECT COUNT(*) AS admin_count FROM users WHERE role = 'admin'")
-            #         admin_count = cur.fetchone()['admin_count']
-            #
-            #         if admin_count >= MAX_ADMINS:
-            #             flash(f'Cannot assign more than {MAX_ADMINS} admins.', 'danger')
-            #             return redirect(url_for('admin.admin_dashboard'))
-            #     elif new_role == 'patient':
-            #         # Check if the patient record already exists
-            #         cur.execute("SELECT * FROM patients WHERE user_id = %s", (user_id,))
-            #         existing_patient = cur.fetchone()
-            #
-            #         if existing_patient:
-            #             flash("This user is already a patient.", "info")
-            #         else:
-            #             # Insert into the `patients` table with patient-specific information
-            #             cur.execute(
-            #                 "INSERT INTO patients (user_id) VALUES (%s)",
-            #                 (user_id))
-            #             flash("Patient role assigned successfully!", "success")
-            #     elif new_role == 'coach':
-            #         # Check if the coach record already exists
-            #         cur.execute("SELECT * FROM coach WHERE user_id = %s", (user_id,))
-            #         existing_coach = cur.fetchone()
-            #
-            #         if existing_coach:
-            #             flash("This user is already a coach.", "info")
-            #         else:
-            #             # Insert into the `coach` table with coach-specific information
-            #             cur.execute("INSERT INTO coach (user_id) VALUES (%s)",
-            #                         (user_id))
-            #             flash("Coach role assigned successfully!", "success")
-            #
-            #     mysql.connection.commit()
-            #
-            #
-            #     # Update the user's role in the database
-            #     cur = mysql.connection.cursor()
-            #     cur.execute("UPDATE users SET role = %s WHERE user_id = %s", (new_role, user_id))
-            #     mysql.connection.commit()
-            #
-            #     flash('User role updated successfully!', 'success')
 
             elif action == 'delete_user':
                 # Delete user by ID
@@ -235,7 +246,7 @@ def edit_patient_profile(user_id):
         # Retrieve form data, including date of birth
         username = request.form['username']
         email = request.form['email']
-        name = request.form['name']
+        first_name = request.form['first_name']
         #age = request.form['age']
         dob = request.form['dob']  # New field
         gender = request.form['gender']
@@ -255,10 +266,10 @@ def edit_patient_profile(user_id):
             # Update the patients table
             cur.execute("""
                 UPDATE patients 
-                SET name = %s, dob = %s, gender = %s, 
+                SET first_name = %s, dob = %s, gender = %s, 
                     phone = %s, address = %s, health_condition = %s 
                 WHERE user_id = %s
-            """, (name, dob, gender, phone, address, medical_history, user_id))
+            """, (first_name, dob, gender, phone, address, medical_history, user_id))
 
             mysql.connection.commit()
             flash("Patient profile updated successfully!", "success")
@@ -285,7 +296,6 @@ def edit_patient_profile(user_id):
 
     return render_template('admin_patient_profile.html', patient=patient)
 
-
 # Route to list all patients
 @admin_bp.route('/patients')
 def list_patients():
@@ -301,6 +311,22 @@ def list_patients():
     patients = cur.fetchall()
     cur.close()
     return render_template('admin_patients_list.html', patients=patients)
+
+# Route to list all coaches
+@admin_bp.route('/list_coaches', methods=['GET'])
+def list_coaches():
+    # Retrieve all patients from the database
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cur.execute("""
+            SELECT users.user_id, users.username, users.email, coach.first_name, coach.last_name, coach.specialization, 
+                   coach.phone
+            FROM users
+            JOIN coach ON users.user_id = coach.coach_id
+            WHERE users.role = 'coach'
+        """)
+    coaches = cur.fetchall()
+    cur.close()
+    return render_template('admin_coaches_list.html', coaches=coaches)
 
 @admin_bp.route('/view_patient/<int:user_id>')
 def view_patient_profile(user_id):
@@ -329,4 +355,6 @@ def view_patient_profile(user_id):
 
     # Pass `patient` to the template, not `patients`
     return render_template('admin_patient_profile.html', patient=patient)
+
+
 

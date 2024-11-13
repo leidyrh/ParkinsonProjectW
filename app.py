@@ -21,7 +21,10 @@ def create_app():
     from routes.patient_routes import patient_bp
     from routes.coach_routes import coach_bp
     from routes.chat_routes import chat_bp
+    from routes.admin_classes_routes import admin_classes_bp
     # Register Blueprints
+
+    app.register_blueprint(admin_classes_bp, url_prefix= '/admin_classes')
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(patient_bp, url_prefix='/patient')
@@ -37,3 +40,5 @@ def create_app():
 if __name__ == '__main__':
     app = create_app()
     app.run(debug=True)
+
+    print(app.url_map)
