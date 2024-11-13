@@ -50,7 +50,7 @@ def patient_dashboard():
 def mark_notification_as_read(notification_id):
     """Marks a notification as read."""
     manage_notification(action='mark_as_read', notification_id=notification_id)
-    return redirect(url_for('patient_dashboard'))
+    return redirect(url_for('patient.patient_dashboard'))
 
 
 # Edit Patient Profile
