@@ -111,21 +111,43 @@ def edit_profile():
 
 
 # View Patient Appointments
-@patient_bp.route('/appointments')
+@patient_bp.route('/view_appointments')
 def view_appointments():
-    """Display the list of appointments for the patient."""
+    """Displays all booked classes for the patient."""
     if 'role' not in session or session['role'] != 'patient':
-        return redirect(url_for('auth.login'))  # Redirect to login if not authenticated as patient
+        return redirect(url_for('auth.login'))
 
     user_id = session.get('user_id')
 
-    # Retrieve the patient's appointments
+    # Retrieve the patient's booked classes using patient_classes
     cur = mysql.connection.cursor(pymysql.cursors.DictCursor)
-    cur.execute("SELECT * FROM appointments WHERE patient_id = %s ORDER BY appointment_date ASC", (user_id,))
-    appointments = cur.fetchall()
-    cur.close()
+    try:
+        cur.execute("""
+            SELECT c.class_name, c.description, c.class_date, c.start_time, c.end_time, 
+                   c.location, c.instructor
+            FROM classes c
+            INNER JOIN patient_classes pc ON c.class_id = pc.class_id
+            WHERE pc.patient_id = %s
+            ORDER BY c.class_date ASC, c.start_time ASC
+        """, (user_id,))
+        booked_classes = cur.fetchall()
 
-    return render_template('appointments.html', appointments=appointments)
+        # Debug: Log fetched classes
+        print(f"Booked classes for patient {user_id}: {booked_classes}")
+
+    except Exception as e:
+        flash(f"Error retrieving booked classes: {e}", "danger")
+        print(f"Error retrieving booked classes: {e}")
+        booked_classes = []
+    finally:
+        cur.close()
+
+    return render_template('patient_view_appointments.html', appointments=booked_classes)
+
+
+
+
+
 
 # View Available Classes
 @patient_bp.route('/view_classes', methods=['GET'])
@@ -164,6 +186,9 @@ def book_class():
         patient_id = session.get('user_id')
         class_id = request.form.get('class_id')
 
+        # Debugging: Log patient_id and class_id
+        print(f"Attempting to book: patient_id={patient_id}, class_id={class_id}")
+
         if not patient_id or not class_id:
             flash("Invalid request. Missing patient or class information.", "danger")
             return redirect(url_for('patient.view_classes'))
@@ -176,6 +201,7 @@ def book_class():
 
         if existing_booking:
             flash("You have already booked this class.", "info")
+            print(f"Class {class_id} already booked by patient {patient_id}")
             return redirect(url_for('patient.view_classes'))
 
         # Check class capacity
@@ -186,18 +212,24 @@ def book_class():
             flash("The class is fully booked.", "danger")
             return redirect(url_for('patient.view_classes'))
 
-        # Insert the booking into the database and decrease class capacity
+        # Insert the booking into the database
         cur.execute("INSERT INTO patient_classes (patient_id, class_id) VALUES (%s, %s)", (patient_id, class_id))
         cur.execute("UPDATE classes SET capacity = capacity - 1 WHERE class_id = %s", (class_id,))
         mysql.connection.commit()
+
         flash("Class booked successfully!", "success")
+        print(f"Class {class_id} successfully booked by patient {patient_id}")
 
     except Exception as e:
         flash(f"An error occurred: {e}", "danger")
+        print(f"Error booking class: {e}")
     finally:
         cur.close()
 
     return redirect(url_for('patient.view_classes'))
+
+
+
 
 
 
@@ -230,28 +262,30 @@ def cancel_booking():
 # Track Symptoms
 @patient_bp.route('/track_symptoms', methods=['GET', 'POST'])
 def track_symptoms():
-    """Allows patients to track symptoms."""
+    """Allows patients to track symptoms and view their history."""
     if 'role' not in session or session['role'] != 'patient':
         return redirect(url_for('auth.login'))  # Redirect to login if not authenticated as patient
+
+    user_id = session.get('user_id')
 
     if request.method == 'POST':
         symptom = request.form.get('symptom')
         severity = request.form.get('severity')
         notes = request.form.get('notes')
+        start_date = request.form.get('start_date')
 
         # Validate inputs
-        if not symptom or not severity:
-            flash("Symptom and severity are required.", "danger")
+        if not symptom or not severity or not start_date:
+            flash("Symptom, severity, and start date are required.", "danger")
             return redirect(url_for('patient.track_symptoms'))
 
         # Insert the symptom into the database
-        user_id = session.get('user_id')
         cur = mysql.connection.cursor(pymysql.cursors.DictCursor)
         try:
             cur.execute("""
-                INSERT INTO symptoms (user_id, symptom, severity, notes, created_at)
-                VALUES (%s, %s, %s, %s, NOW())
-            """, (user_id, symptom, severity, notes))
+                INSERT INTO symptoms (user_id, symptom, severity, notes, start_date, created_at)
+                VALUES (%s, %s, %s, %s, %s, NOW())
+            """, (user_id, symptom, severity, notes, start_date))
             mysql.connection.commit()
             flash("Symptom tracked successfully!", "success")
         except Exception as e:
@@ -261,7 +295,19 @@ def track_symptoms():
 
         return redirect(url_for('patient.track_symptoms'))
 
-    return render_template('patient_track_symptoms.html')
+    # Retrieve symptom history for the patient
+    cur = mysql.connection.cursor(pymysql.cursors.DictCursor)
+    cur.execute("""
+        SELECT symptom, severity, notes, start_date, created_at
+        FROM symptoms
+        WHERE user_id = %s
+        ORDER BY start_date DESC
+    """, (user_id,))
+    symptom_history = cur.fetchall()
+    cur.close()
+
+    return render_template('patient_track_symptoms.html', symptom_history=symptom_history)
+
 
 # Messages (Patient to Coach Communication)
 @patient_bp.route('/messages', methods=['GET', 'POST'])
