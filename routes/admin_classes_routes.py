@@ -131,13 +131,18 @@ def manage_classes():
                     print("Error:", e)
 
             # After registering the patient to a class
+            # Fetch the class name and start time for the notification message
+            cur.execute("SELECT class_name, start_time FROM classes WHERE class_id = %s", (class_id,))
+            class_info = cur.fetchone()
+            class_name = class_info['class_name']
+            start_time = class_info['start_time']
+
             # Send a notification to the patient
-            class_name = "Example Class Name"  # Replace with actual class name
-            start_time = "Example Start Time"  # Replace with actual start time
             manage_notification(
                 action='send',
                 patient_id=patient_id,
                 class_id=class_id,
+                notification_type='Reminder',
                 message=f"You have been registered for the class {class_name} on {start_time}."
             )
 

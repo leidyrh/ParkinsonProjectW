@@ -51,7 +51,7 @@
                                     <small class="text-muted">{{ notification.notification_date }}</small>
                                 </div>
                                 {% if notification.notification_status != 'Read' %}
-                                    <form action="{{ url_for('mark_notification_as_read', notification_id=notification.notification_id) }}" method="POST">
+                                    <form action="{{ url_for('patient.mark_notification_as_read', notification_id=notification.notification_id) }}" method="POST">
                                         <button type="submit" class="btn btn-primary btn-sm">Mark as Read</button>
                                     </form>
                                 {% endif %}
