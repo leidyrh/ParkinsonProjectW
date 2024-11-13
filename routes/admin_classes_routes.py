@@ -146,6 +146,23 @@ def manage_classes():
                 message=f"You have been registered for the class {class_name} on {start_time}."
             )
 
+        # Deleting a patient from a class
+        elif 'delete_patient' in request.form:
+            patient_id = request.form['patient_id']
+            class_id = request.form['class_id']
+
+            try:
+                # Delete the patient's registration for the specific class
+                cur.execute("DELETE FROM patient_classes WHERE patient_id = %s AND class_id = %s",
+                            (patient_id, class_id))
+                mysql.connection.commit()
+                flash("Patient successfully removed from the class!", "success")
+                print(f"Patient {patient_id} removed from class {class_id}")
+            except Exception as e:
+                mysql.connection.rollback()
+                flash("An error occurred while removing the patient from the class.", "danger")
+                print("Error:", e)
+
         #assign a coach to a class
         elif 'assign_coach' in request.form:
             coach_id = request.form['coach_id']
@@ -214,7 +231,7 @@ def manage_classes():
     class_registrations = {}
     for class_info in classes:
         cur.execute("""
-            SELECT patients.first_name, patients.last_name 
+            SELECT patients.patient_id, patients.first_name, patients.last_name 
             FROM patient_classes
             JOIN patients ON patient_classes.patient_id = patients.patient_id
             WHERE patient_classes.class_id = %s

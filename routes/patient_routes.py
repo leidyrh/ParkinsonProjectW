@@ -1,3 +1,4 @@
+import MySQLdb
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from app import mysql
 import pymysql
@@ -136,23 +137,30 @@ def view_classes():
 
     user_id = session.get('user_id')
 
-    # Fetch classes and check if the patient is enrolled
     cur = mysql.connection.cursor(pymysql.cursors.DictCursor)
+    # Get the patient_id using user_id
+    cur.execute("SELECT patient_id FROM patients WHERE user_id = %s", (user_id,))
+    patient_record = cur.fetchone()
+    patient_id = patient_record['patient_id'] if patient_record else None
+
+    if not patient_id:
+        flash("Patient record not found.", "danger")
+        return redirect(url_for('auth.login'))
+
+    # Fetch classes and check if the patient is enrolled
     cur.execute("""
         SELECT c.*,
                CASE WHEN pc.patient_id IS NOT NULL THEN TRUE ELSE FALSE END AS booked,
                c.capacity AS remaining_capacity
         FROM classes c
         LEFT JOIN patient_classes pc ON c.class_id = pc.class_id AND pc.patient_id = %s
-    """, (user_id,))
+    """, (patient_id,))
     classes = cur.fetchall()
     cur.close()
 
     return render_template('patient_view_classes.html', classes=classes)
 
 
-
-# Book a Class
 @patient_bp.route('/book_class', methods=['POST'])
 def book_class():
     """Allows a patient to book a class and decreases the class capacity."""
@@ -161,20 +169,28 @@ def book_class():
         return redirect(url_for('auth.login'))
 
     try:
-        patient_id = session.get('user_id')
+        user_id = session.get('user_id')
         class_id = request.form.get('class_id')
 
-        if not patient_id or not class_id:
-            flash("Invalid request. Missing patient or class information.", "danger")
+        if not user_id or not class_id:
+            flash("Invalid request. Missing user or class information.", "danger")
             return redirect(url_for('patient.view_classes'))
 
-        cur = mysql.connection.cursor()
+        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+        # Retrieve patient_id using user_id from the session
+        cur.execute("SELECT patient_id FROM patients WHERE user_id = %s", (user_id,))
+        patient_record = cur.fetchone()
+
+        if not patient_record:
+            flash("Patient record not found.", "danger")
+            return redirect(url_for('patient.view_classes'))
+
+        patient_id = patient_record['patient_id']
 
         # Check if the class is already booked
         cur.execute("SELECT * FROM patient_classes WHERE patient_id = %s AND class_id = %s", (patient_id, class_id))
-        existing_booking = cur.fetchone()
-
-        if existing_booking:
+        if cur.fetchone():
             flash("You have already booked this class.", "info")
             return redirect(url_for('patient.view_classes'))
 
@@ -182,7 +198,11 @@ def book_class():
         cur.execute("SELECT capacity FROM classes WHERE class_id = %s", (class_id,))
         class_info = cur.fetchone()
 
-        if not class_info or class_info['capacity'] <= 0:
+        if not class_info:
+            flash("Class not found.", "danger")
+            return redirect(url_for('patient.view_classes'))
+
+        if class_info['capacity'] <= 0:
             flash("The class is fully booked.", "danger")
             return redirect(url_for('patient.view_classes'))
 
@@ -199,26 +219,40 @@ def book_class():
 
     return redirect(url_for('patient.view_classes'))
 
-
-
-
-# Cancel a Class Booking
 @patient_bp.route('/cancel_booking', methods=['POST'])
 def cancel_booking():
     """Allows a patient to cancel a class booking and increases the class capacity."""
     if 'role' not in session or session['role'] != 'patient':
         return redirect(url_for('auth.login'))
 
-    patient_id = session.get('user_id')
+    user_id = session.get('user_id')
     class_id = request.form.get('class_id')
 
-    cur = mysql.connection.cursor()
     try:
+        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+        # Retrieve patient_id using user_id from the session
+        cur.execute("SELECT patient_id FROM patients WHERE user_id = %s", (user_id,))
+        patient_record = cur.fetchone()
+
+        if not patient_record:
+            flash("Patient record not found.", "danger")
+            return redirect(url_for('patient.view_classes'))
+
+        patient_id = patient_record['patient_id']
+
+        # Ensure the booking exists before attempting to delete it
+        cur.execute("SELECT * FROM patient_classes WHERE patient_id = %s AND class_id = %s", (patient_id, class_id))
+        if not cur.fetchone():
+            flash("You are not registered for this class.", "info")
+            return redirect(url_for('patient.view_classes'))
+
         # Remove the booking from the database and increase class capacity
         cur.execute("DELETE FROM patient_classes WHERE patient_id = %s AND class_id = %s", (patient_id, class_id))
         cur.execute("UPDATE classes SET capacity = capacity + 1 WHERE class_id = %s", (class_id,))
         mysql.connection.commit()
         flash("Class reservation canceled successfully!", "success")
+
     except Exception as e:
         flash(f"Error canceling reservation: {str(e)}", "danger")
     finally:

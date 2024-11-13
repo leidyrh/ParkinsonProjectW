@@ -303,7 +303,7 @@ def list_patients():
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     cur.execute("""
             SELECT users.user_id, users.username, users.email, patients.first_name, patients.dob, 
-                   patients.gender, patients.phone, patients.address
+                   patients.gender, patients.phone, patients.address, patients.health_condition
             FROM users
             JOIN patients ON users.user_id = patients.user_id
             WHERE users.role = 'patient'

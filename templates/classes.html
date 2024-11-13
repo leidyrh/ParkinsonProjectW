@@ -100,12 +100,25 @@
                         {% endif %}
                     </td>
                     <td>
-                        <ul>
-                            {% for patient in class_registrations[class.class_id] %}
-                                <li>{{ patient.first_name }} {{ patient.last_name }}</li>
-                            {% endfor %}
-                        </ul>
-                    </td>
+                    <ul>
+                        {% for patient in class_registrations[class.class_id] %}
+                            <li>
+                                {{ patient.first_name }} {{ patient.last_name }}
+
+                                <!-- Drop Patient Button -->
+                                <form action="{{ url_for('admin_classes.manage_classes') }}" method="POST" style="display:inline;">
+                                    <input type="hidden" name="patient_id" value="{{ patient.patient_id }}">
+                                    <input type="hidden" name="class_id" value="{{ class.class_id }}">
+                                    <input type="hidden" name="delete_patient" value="true">
+                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to remove this patient from the class?');">
+                                        Drop Patient
+                                    </button>
+                                </form>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </td>
+
                     <td>
                         <!-- Form to Register Patient -->
                         <form action="{{ url_for('admin_classes.manage_classes') }}" method="POST" class="mb-2">
@@ -119,6 +132,7 @@
                             </select>
                             <button type="submit" class="btn btn-info btn-sm">Register Patient</button>
                         </form>
+
                         <!-- Form to Assign Coach -->
                         <form action="{{ url_for('admin_classes.manage_classes') }}" method="POST">
                             <input type="hidden" name="assign_coach" value="1">
