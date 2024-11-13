@@ -356,5 +356,67 @@ def view_patient_profile(user_id):
     # Pass `patient` to the template, not `patients`
     return render_template('admin_patient_profile.html', patient=patient)
 
+@admin_bp.route('/edit_coach/<int:user_id>', methods=['GET', 'POST'])
+def edit_coach_profile(user_id):
+    # Ensure the user is an admin
+    if 'user_id' not in session or session.get('role') != 'admin':
+        flash("You must be an admin to access this page.", "warning")
+        return redirect(url_for('auth.login'))
+
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+    if request.method == 'POST':
+        # Retrieve form data, including date of birth
+        username = request.form['username']
+        email = request.form['email']
+        first_name = request.form['first_name']
+        last_name = request.form['last_name']
+        phone = request.form['phone']
+        specialization = request.form['specialization']
+
+
+
+        # Update the `users` and `patients` tables
+        try:
+            # Update the users table
+            cur.execute("""
+                UPDATE users 
+                SET username = %s, email = %s 
+                WHERE user_id = %s
+            """, (username, email, user_id))
+
+            # Update the coach table
+            cur.execute("""
+                UPDATE coach 
+                SET first_name = %s, last_name = %s, specialization = %s, 
+                    phone = %s 
+                WHERE user_id = %s
+            """, ( first_name,last_name, specialization,phone, address, user_id))
+
+            mysql.connection.commit()
+            flash("Coach profile updated successfully!", "success")
+        except Exception as e:
+            mysql.connection.rollback()
+            flash("An error occurred while updating the coach profile.", "danger")
+            print(e)
+
+    # Fetch updated coach information for rendering
+    cur.execute("""
+        SELECT users.user_id, users.username, users.email, coach.first_name, 
+               coach.last_name, coach.specialization, coach.phone 
+        FROM users
+        JOIN coach ON users.user_id = coach.coach_id
+        WHERE users.user_id = %s
+    """, (user_id,))
+    coach = cur.fetchone()
+    cur.close()
+
+    if not coach:
+        flash("Patient not found.", "danger")
+        return redirect(url_for('admin.admin_coach_list'))
+
+    return render_template('admin_coach_profile.html', coach=coach)
+
+
 
 

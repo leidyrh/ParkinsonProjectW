@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - View Patient Profile</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Coach Profile</h2>
+
+        <!-- Profile Information Card -->
+        <div class="card my-4">
+            <div class="card-header">
+                <h5>Personal Information</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Username:</strong> {{ coach.username }}</p>
+                <p><strong>Email:</strong> {{ coach.email }}</p>
+                <p><strong>First Name:</strong> {{ coach.first_name }}</p>
+                <p><strong>Last Name:</strong> {{ coach.last_name }}</p>
+                <p><strong>Specialization:</strong> {{ coach.specialization }}</p>
+                <p><strong>Contact Number:</strong> {{ coach.phone }}</p>
+
+            </div>
+        </div>
+
+        <!-- Inline Edit Form -->
+        <form action="{{ url_for('admin.edit_coach_profile', user_id=coach.user_id) }}" method="POST">
+
+            <!-- Personal Information Card -->
+            <div class="card my-4">
+                <div class="card-header">
+                    <h5>Personal Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" name="username" id="username" value="{{ coach.username }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" name="email" id="email" value="{{ coach.email }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="first_name" class="form-label">First Name</label>
+                        <input type="text" class="form-control" name="first_name" id="first_name" value="{{ coach.first_name }}" required>
+                    </div>
+                     <div class="mb-3">
+                        <label for="last_name" class="form-label">Last Name</label>
+                        <input type="text" class="form-control" name="last_name" id="last_name" value="{{ coach.last_name }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Contact Number</label>
+                        <input type="text" class="form-control" name="phone" id="phone" value="{{ coach.phone }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="specialization" class="form-label">Specialization</label>
+                        <textarea class="form-control" name="specialization" id="specialization">{{ coach.specialization }}</textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update Changes</button>
+                </div>
+            </div>
+        </form>
+
+        <!-- Admin Actions -->
+        <div class="mt-4">
+            <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+
+            <a href="{{ url_for('admin.list_coaches') }}" class="btn btn-secondary">Back to Coach List</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+

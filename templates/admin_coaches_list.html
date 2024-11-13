@@ -22,6 +22,8 @@
                 <th>Last Name</th>
                 <th>Specialization</th>
                 <th>Phone</th>
+                <th>Actions</th>
+
             </tr>
         </thead>
         <tbody>
@@ -34,6 +36,9 @@
                     <td>{{ coach.last_name }}</td>
                     <td>{{ coach.specialization }}</td>
                     <td>{{ coach.phone }}</td>
+                    <td>
+                    <a href="{{ url_for('admin.edit_coach_profile', user_id=coach.user_id) }}">Edit Coach</a>
+                    <td>
                 </tr>
             {% endfor %}
         </tbody>
