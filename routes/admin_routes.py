@@ -1,9 +1,11 @@
 import MySQLdb
 import bcrypt
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app, jsonify
 from werkzeug.security import generate_password_hash
 from app import mysql
 from routes.auth_routes import is_valid_username, is_valid_email, is_strong_password
+from datetime import datetime
+
 
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -197,7 +199,19 @@ def admin_dashboard():
             # Re-render the page with the updated user list
             return render_template('admin_dashboard.html', users=users)
 
-        return render_template('admin_dashboard.html', users=users)
+        # After handling each action, re-fetch the updated patient lists. NEEDED FOR MESSAGING LR
+        cur.execute("""
+                            SELECT users.user_id, users.username, users.email, patients.first_name, patients.dob,                                        patients.gender, patients.phone, patients.address, patients.health_condition
+                                FROM users
+                                JOIN patients ON users.user_id = patients.user_id
+                                WHERE users.role = 'patient'
+                            """)
+        patients = cur.fetchall()
+        # # Debugging statement
+        # print("Fetched patients:", patients)
+        cur.close()
+
+        return render_template('admin_dashboard.html', users=users, patients=patients)
 
     else:
         flash('You do not have permission to access the admin dashboard.', 'danger')
@@ -391,7 +405,7 @@ def edit_coach_profile(user_id):
                 SET first_name = %s, last_name = %s, specialization = %s, 
                     phone = %s 
                 WHERE user_id = %s
-            """, ( first_name,last_name, specialization,phone, address, user_id))
+            """, ( first_name,last_name, specialization,phone, user_id))
 
             mysql.connection.commit()
             flash("Coach profile updated successfully!", "success")
@@ -416,6 +430,85 @@ def edit_coach_profile(user_id):
         return redirect(url_for('admin.admin_coach_list'))
 
     return render_template('admin_coach_profile.html', coach=coach)
+
+@admin_bp.route('/messages', methods=['GET', 'POST'])
+def manage_messages():
+    action = request.args.get('action')
+    patient_id = request.args.get('patient_id', type=int)
+
+    if request.method == 'POST' and action == 'send':
+        # Send a message
+        data = request.get_json()
+        content = data.get('content')
+        sender_id = session['user_id']  # Assuming the admin's user ID is in the session
+
+        #print(f"Attempting to send message: {content} to patient_id: {patient_id}")
+        print("Attempting to send message:")
+        print("Content:", content)
+        print("Sender ID:", sender_id)
+        print("Recipient ID:", patient_id)
+
+        if not content or not patient_id:
+            return jsonify({"error": "Invalid data"}), 400
+
+        try:
+            cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+            cur.execute("""
+                    INSERT INTO messages (sender_id, recipient_id, content, timestamp)
+                    VALUES (%s, %s, %s, NOW())
+                """, (sender_id, patient_id, content))
+            mysql.connection.commit()
+            print("Commit successful")  # Debugging output
+            cur.close()
+
+            print("Message sent successfully")
+        except Exception as e:
+            print("Error inserting message:", e)
+            return jsonify({"error": "Failed to insert message", "details": str(e)}), 500
+
+        return jsonify({"message": "Message sent successfully"}), 201
+
+    elif request.method == 'GET' and action == 'fetch' and patient_id:
+        # Fetch messages between admin and a specific patient
+        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cur.execute("""
+            SELECT sender_id, recipient_id, content, timestamp 
+            FROM messages 
+            WHERE (sender_id = %s AND recipient_id = %s) 
+               OR (sender_id = %s AND recipient_id = %s)
+            ORDER BY timestamp ASC
+        """, (session['user_id'], patient_id, patient_id, session['user_id']))
+        messages = cur.fetchall()
+        cur.close()
+
+        # Format messages for output
+        messages_list = [
+            {
+                "sender_id": msg['sender_id'],
+                "recipient_id": msg['recipient_id'],
+                "content": msg['content'],
+                "timestamp": msg['timestamp'].strftime("%Y-%m-%d %H:%M:%S")
+            }
+            for msg in messages
+        ]
+
+        return jsonify(messages_list), 200
+
+    # Render the admin_messages.html template on a basic GET request (without action parameter)
+    if request.method == 'GET' and action is None:
+        # Fetch the list of patients for the sidebar
+        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cur.execute("""
+            SELECT users.user_id, users.username, users.email, patients.first_name 
+            FROM users 
+            JOIN patients ON users.user_id = patients.user_id 
+            WHERE users.role = 'patient'
+        """)
+        patients = cur.fetchall()
+        cur.close()
+
+        # Pass the list of patients to the template for rendering the sidebar
+        return render_template('admin_messages.html', patients=patients)
 
 
 

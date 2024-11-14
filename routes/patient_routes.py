@@ -1,5 +1,5 @@
 import MySQLdb
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
 from app import mysql
 import pymysql
 
@@ -297,53 +297,96 @@ def track_symptoms():
 
     return render_template('patient_track_symptoms.html')
 
-# Messages (Patient to Coach Communication)
+
 @patient_bp.route('/messages', methods=['GET', 'POST'])
-def messages():
-    """Allows patients to view and send messages."""
-    if 'role' not in session or session['role'] != 'patient':
-        return redirect(url_for('auth.login'))  # Redirect to login if not authenticated as patient
+def manage_patient_messages():
+    # Ensure the user is logged in and is a patient
+    if 'user_id' not in session or session.get('role') != 'patient':
+        return "Unauthorized access", 403
 
-    user_id = session.get('user_id')
+    patient_id = session['user_id']
+    action = request.args.get('action')
 
-    cur = mysql.connection.cursor(pymysql.cursors.DictCursor)
+    # Render the HTML page for patient messages if no action is provided
+    if request.method == 'GET' and action is None:
+        return render_template('patient_messages.html')  # Render the HTML template
 
-    if request.method == 'POST':
-        coach_id = request.form['coach_id']
-        message_content = request.form['message']
-
-        # Validate inputs
-        if not coach_id or not message_content:
-            flash("Both coach and message content are required.", "danger")
-            return redirect(url_for('patient.messages'))
-
-        # Insert the message into the database
+    # Handle fetching messages when action is 'fetch'
+    if request.method == 'GET' and action == 'fetch':
         try:
+            cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+            # Fetch all messages where the patient is either the sender or the recipient
             cur.execute("""
-                INSERT INTO messages (sender_id, receiver_id, message_content, sent_at)
-                VALUES (%s, %s, %s, NOW())
-            """, (user_id, coach_id, message_content))
-            mysql.connection.commit()
-            flash("Message sent successfully!", "success")
+                SELECT sender_id, recipient_id, content, timestamp
+                FROM messages
+                WHERE sender_id = %s OR recipient_id = %s
+                ORDER BY timestamp ASC
+            """, (patient_id, patient_id))
+            messages = cur.fetchall()
+            cur.close()
+
+            # Format messages for output
+            messages_list = [
+                {
+                    "sender_id": msg['sender_id'],
+                    "recipient_id": msg['recipient_id'],
+                    "content": msg['content'],
+                    "timestamp": msg['timestamp'].strftime("%Y-%m-%d %H:%M:%S")
+                }
+                for msg in messages
+            ]
+
+            return jsonify(messages_list), 200
+
         except Exception as e:
-            flash(f"Error: {str(e)}", "danger")
+            print("Error fetching messages:", e)
+            return jsonify({"error": "Failed to fetch messages"}), 500
 
-    # Retrieve messages for the patient
-    cur.execute("""
-        SELECT messages.message_content, messages.sent_at,
-               users.username AS sender
-        FROM messages
-        JOIN users ON messages.sender_id = users.user_id
-        WHERE receiver_id = %s
-        ORDER BY messages.sent_at DESC
-    """, (user_id,))
-    received_messages = cur.fetchall()
+    # Handle fetching unique senders when action is 'get_senders'
+    elif request.method == 'GET' and action == 'get_senders':
+        try:
+            cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+            # Fetch unique users who sent messages to the patient
+            cur.execute("""
+                SELECT DISTINCT sender_id, users.username 
+                FROM messages
+                JOIN users ON messages.sender_id = users.user_id
+                WHERE recipient_id = %s
+            """, (patient_id,))
+            senders = cur.fetchall()
+            cur.close()
 
-    # Fetch the list of coaches for messaging
-    cur.execute("""
-        SELECT user_id, username FROM users WHERE role = 'coach'
-    """)
-    coaches = cur.fetchall()
-    cur.close()
+            return jsonify(senders), 200
 
-    return render_template('patient_messages.html', messages=received_messages, coaches=coaches)
+        except Exception as e:
+            print("Error fetching senders:", e)
+            return jsonify({"error": "Failed to fetch senders"}), 500
+
+    # Handle sending messages when action is 'send'
+    if request.method == 'POST' and action == 'send':
+        data = request.get_json()
+        content = data.get('content')
+        recipient_id = data.get('recipient_id')  # Get recipient_id from the request data
+
+        if not content:
+            return jsonify({"error": "Message content cannot be empty"}), 400
+        if not recipient_id:
+            return jsonify({"error": "Recipient ID is required"}), 400
+
+        try:
+            cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+            cur.execute("""
+                INSERT INTO messages (sender_id, recipient_id, content, timestamp)
+                VALUES (%s, %s, %s, NOW())
+            """, (patient_id, recipient_id, content))
+            mysql.connection.commit()
+            cur.close()
+
+            return jsonify({"message": "Message sent successfully"}), 201
+        except Exception as e:
+            print("Error sending message:", e)
+            return jsonify({"error": "Failed to send message"}), 500
+
+    return jsonify({"error": "Invalid action or method"}), 400
+
+
