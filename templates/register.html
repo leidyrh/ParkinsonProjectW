@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Afacad:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
 </head>
 <body>
+<div class="centerElements">
     <h2>Register</h2>
 
     <form method="POST">
@@ -38,6 +39,7 @@
     {% endwith %}
 
     <p>Already have an account? <a href="{{ url_for('auth.login') }}">Login here</a></p>
+    </div>
 </body>
 
 </html>

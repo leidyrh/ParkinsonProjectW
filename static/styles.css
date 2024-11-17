@@ -71,6 +71,12 @@
       align-items: center;
       text-align: center;
   }
+
+  .centerElements {              /* Use flexbox for centering */
+      justify-content: center;        /* Center horizontally */
+      align-items: center;
+      text-align: center;
+  }
   
   img {
       width: 300px;
@@ -95,10 +101,10 @@
               padding: 10px;
   }
   
-  
-  
+
   
   input[type="text"],
+  input[type="email"],
   input[type="password"] {
       width: 100%;
   }
