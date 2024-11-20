@@ -32,12 +32,23 @@
       height: 100vh;                  /* Full height of the viewport */
   }
 
-  .container {
+  html,
+  body {
+    height: 100%;
+  }
+
+  .container1 {
     height: 100vh;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
   }
+
+.centered-wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
   
   .logo-container {
     text-align: center;
@@ -50,13 +61,22 @@
       text-align: center;              /* Center the header text */
   }
   
-  form {
+  .form-type-1 {
       background: white;              /* White background for the form */
       font-size: 20px;
       padding: 40px;                  /* Increased padding inside the form */
       border-radius: 8px;             /* Rounded corners */
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
       width: 300px;                   /* Fixed width for the form */
+  }
+
+  .form-type-2 {
+      background: white;              /* White background for the form */
+      font-size: 20px;
+      padding: 20px;                  /* Increased padding inside the form */
+      border-radius: 8px;             /* Rounded corners */
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+
   }
   
   label {
