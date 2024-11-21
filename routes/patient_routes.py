@@ -264,10 +264,13 @@ def cancel_booking():
 # Track Symptoms
 @patient_bp.route('/track_symptoms', methods=['GET', 'POST'])
 def track_symptoms():
-    """Allows patients to track symptoms."""
+    """Allows patients to track symptoms and view previously tracked symptoms."""
     if 'role' not in session or session['role'] != 'patient':
         return redirect(url_for('auth.login'))  # Redirect to login if not authenticated as patient
 
+    user_id = session.get('user_id')
+
+    # POST Method: Insert new symptom
     if request.method == 'POST':
         symptom = request.form.get('symptom')
         severity = request.form.get('severity')
@@ -278,24 +281,62 @@ def track_symptoms():
             flash("Symptom and severity are required.", "danger")
             return redirect(url_for('patient.track_symptoms'))
 
-        # Insert the symptom into the database
-        user_id = session.get('user_id')
+        # Retrieve patient_id for the logged-in user
         cur = mysql.connection.cursor(pymysql.cursors.DictCursor)
         try:
+            cur.execute("SELECT patient_id FROM patients WHERE user_id = %s", (user_id,))
+            patient = cur.fetchone()
+
+            if not patient:
+                flash("Error: Patient ID not found for the logged-in user.", "danger")
+                return redirect(url_for('patient.track_symptoms'))
+
+            patient_id = patient['patient_id']
+
+            # Insert the symptom into the database
             cur.execute("""
-                INSERT INTO symptoms (user_id, symptom, severity, notes, created_at)
+                INSERT INTO symptoms (patient_id, symptom, severity, notes, created_at)
                 VALUES (%s, %s, %s, %s, NOW())
-            """, (user_id, symptom, severity, notes))
+            """, (patient_id, symptom, severity, notes))
             mysql.connection.commit()
             flash("Symptom tracked successfully!", "success")
         except Exception as e:
-            flash(f"Error: {str(e)}", "danger")
+            flash(f"Error inserting symptom: {str(e)}", "danger")
         finally:
             cur.close()
 
         return redirect(url_for('patient.track_symptoms'))
 
-    return render_template('patient_track_symptoms.html')
+    # GET Method: Fetch all previously tracked symptoms
+    cur = mysql.connection.cursor(pymysql.cursors.DictCursor)
+    try:
+        # Retrieve patient_id for the logged-in user
+        cur.execute("SELECT patient_id FROM patients WHERE user_id = %s", (user_id,))
+        patient = cur.fetchone()
+
+        if not patient:
+            flash("Error: Patient ID not found for the logged-in user.", "danger")
+            symptoms = []  # No symptoms to display
+        else:
+            patient_id = patient['patient_id']
+
+            # Fetch symptoms for the specific patient
+            cur.execute("""
+                SELECT symptom, severity, notes, created_at
+                FROM symptoms
+                WHERE patient_id = %s
+                ORDER BY created_at DESC
+            """, (patient_id,))
+            symptoms = cur.fetchall()
+    except Exception as e:
+        flash(f"Error fetching symptoms: {str(e)}", "danger")
+        symptoms = []  # Default to empty list on error
+    finally:
+        cur.close()
+
+    return render_template('patient_track_symptoms.html', symptoms=symptoms)
+
+
 
 
 @patient_bp.route('/messages', methods=['GET', 'POST'])
