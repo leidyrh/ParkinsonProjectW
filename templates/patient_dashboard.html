@@ -7,26 +7,54 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css">
 </head>
 <body>
-<nav>
-    <ul class="nav nav-underline">
-  <li class="nav-item">
-    <a class="nav-link active" aria-current="page" href="#">Active</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link" href="#">Link</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link" href="#">Link</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link disabled" aria-disabled="true">Disabled</a>
-  </li>
-</ul>
-</nav>
+        <nav class="navbar navbar-expand-sm navbar-light bg-light ps-4">
+            <span class="navbar-brand mb-0 h1">Parkinson's Connection</span>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                 <li class="nav-item active">
+                     <!-- View Classes Button -->
+                     <a href="{{ url_for('patient.view_classes') }}" class="btn btn-outline-secondary mx-2">View Classes</a>
+                 </li>
+                 <li class="nav-item active">
+                     <!-- Messages Button -->
+                     <a href="{{ url_for('patient.manage_patient_messages') }}" class="btn btn-outline-secondary mx-2">Messages</a>
+                 </li>
+                 <li class="nav-item active">
+                     <!-- Track Symptoms -->
+                     <a href="{{ url_for('patient.track_symptoms') }}" class="btn btn-outline-secondary mx-2">Track Symptoms</a>
+                 </li>
+                 <li class="nav-item active">
+                     <a href="{{ url_for('patient.view_appointments') }}" class="btn btn-outline-secondary mx-2">View All Appointments</a>
+                 </li>
+                 <li class="nav-item active">
+                     <!-- Button to trigger the popup -->
+                     <button type="button" class="btn btn-outline-danger mx-2" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                         Logout
+                     </button>
+                     <!-- Modal (Popup) -->
+                     <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                         <div class="modal-dialog">
+                             <div class="modal-content">
+                                 <div class="modal-header">
+                                     <h5 class="modal-title" id="exampleModalLabel">Logout</h5>
+                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                 </div>
+                                 <div class="modal-body">
+                                     Are you sure you want to log out?
+                                 </div>
+                                 <div class="modal-footer">
+                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                                     <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger mx-2">Yes</a>
+                                 </div>
+                             </div>
+                         </div>
+                     </div>
+                 </li>
+                </ul>
+            </div>
+        </nav>
+
     <div class="container mt-5">
-        <div class="text-center mb-4">
-            <img src="{{ url_for('static', filename='KatzJCCLogo.png') }}" alt="Katz JCC Logo">
-        </div>
         <h1 class="text-center">Welcome, {{ patient.first_name }}</h1>
 
         <!-- Patient Information Card -->
@@ -51,7 +79,7 @@
                 <a href="{{ url_for('patient.edit_profile') }}" class="btn btn-primary">Edit Information</a>
             </div>
         </div>
-
+<br>
         <!-- Notifications Section -->
         <div class="card mt-4">
             <div class="card-header">
@@ -80,6 +108,8 @@
             </div>
         </div>
 
+        <br><br>
+
         <!-- Upcoming Appointments Section -->
         <h2>Upcoming Appointments</h2>
         {% if appointments %}
@@ -106,16 +136,19 @@
         {% else %}
             <p class="text-muted">You have no upcoming appointments.</p>
         {% endif %}
-
-        <!-- Options and Actions -->
-        <div class="mt-4">
-            <a href="{{ url_for('patient.track_symptoms') }}" class="btn btn-secondary">View/Track Symptoms</a>
-            <a href="{{ url_for('patient.view_classes') }}" class="btn btn-secondary">View/Book Classes</a>
-            <a href="{{ url_for('patient.manage_patient_messages') }}" class="btn btn-primary">Messages</a>
-            <a href="{{ url_for('patient.view_appointments') }}" class="btn btn-secondary">View All Appointments</a>
-            <a href="{{ url_for('auth.logout') }}" class="btn btn-danger">Logout</a>
-        </div>
     </div>
+
+
+
+  <!-- Footer -->
+<footer class="bg-dark text-center text-white">
+  <div class="text-center p-3">
+    <h4>Have a question? Email
+    <a class="text-white" href="mailto:mmatis@jfedsnj.org">mmatis@jfedsnj.org</a>
+    </h4>
+  </div>
+</footer>
+
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

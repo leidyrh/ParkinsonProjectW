@@ -4,14 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Profile</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Afacad:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
 </head>
 <body>
+<div class="centered-wrapper">
     <h1>Edit Your Profile</h1>
-    <form method="POST" action="{{ url_for('patient.edit_profile') }}">
+
+    <form method="POST" action="{{ url_for('patient.edit_profile') }}" class="form-type-2">
         <label for="first_name">First Name:</label>
         <input type="text" id="first_name" name="first_name" value="{{ patient.first_name }}" required>
         <br>
-
         <label for="last_name">Last Name:</label>
         <input type="text" id="last_name" name="last_name" value="{{ patient.last_name }}" required>
         <br>
@@ -55,5 +61,6 @@
         <button type="submit">Save Changes</button>
     </form>
     <a href="{{ url_for('patient.patient_dashboard') }}">Back to Dashboard</a>
+        </div>
 </body>
 </html>
