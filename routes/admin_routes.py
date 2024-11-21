@@ -487,7 +487,7 @@ def manage_messages():
                 "sender_id": msg['sender_id'],
                 "recipient_id": msg['recipient_id'],
                 "content": msg['content'],
-                "timestamp": msg['timestamp'].strftime("%Y-%m-%d %H:%M:%S")
+                "timestamp": msg['timestamp'].strftime("%m-%d-%Y %H:%M:%S")
             }
             for msg in messages
         ]
