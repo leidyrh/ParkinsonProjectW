@@ -20,6 +20,7 @@ def create_app():
     from routes.admin_routes import admin_bp
     from routes.patient_routes import patient_bp
     from routes.coach_routes import coach_bp
+    from routes.chat_routes import chat_bp
     from routes.admin_classes_routes import admin_classes_bp
     # Register Blueprints
 
@@ -28,6 +29,7 @@ def create_app():
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(patient_bp, url_prefix='/patient')
     app.register_blueprint(coach_bp, url_prefix='/coach')
+    app.register_blueprint(chat_bp, url_prefix='/chat')
     # Home Route (Landing Page)
     @app.route('/')
     def home():
