@@ -27,19 +27,20 @@ def manage_classes():
             duration = request.form['duration']
             start_time = request.form['start_time']
             capacity = request.form['capacity']
-            coach_id = request.form.get('coach_id') or None # Optional
+            image_url = request.form.get('image_url', None)  # Added: Fetching image_url from the form
+            coach_id = request.form.get('coach_id') or None  # Optional
 
             # Validate required fields
             if not class_name or not level or not duration or not start_time or not capacity:
                 flash("Please fill in all required fields.", "danger")
                 return redirect(url_for('admin_classes.manage_classes'))
 
-            # Insert the new class with the selected coach
+            # Insert the new class with the selected coach and image_url
             try:
                 cur.execute("""
-                    INSERT INTO classes (class_name, description, level, duration, start_time, capacity, coach_id)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s)
-                """, (class_name, description, level, duration, start_time, capacity, coach_id))
+                    INSERT INTO classes (class_name, description, level, duration, start_time, capacity, image_url, coach_id)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                """, (class_name, description, level, duration, start_time, capacity, image_url, coach_id))  # Updated query
                 mysql.connection.commit()
                 flash("Class added successfully!", "success")
             except Exception as e:
@@ -55,16 +56,17 @@ def manage_classes():
             duration = request.form['duration']
             start_time = request.form['start_time']
             capacity = request.form['capacity']
+            image_url = request.form.get('image_url', None)  # Added: Fetching updated image_url
             coach_id = request.form.get('coach_id')  # Coach selection
 
-            # Update the class with the new details
+            # Update the class with the new details, including image_url
             try:
                 cur.execute("""
                             UPDATE classes 
                             SET class_name = %s, description = %s, level = %s, 
-                                duration = %s, start_time = %s, capacity = %s, coach_id = %s
+                                duration = %s, start_time = %s, capacity = %s, image_url = %s, coach_id = %s
                             WHERE class_id = %s
-                        """, (class_name, description, level, duration, start_time, capacity, coach_id, class_id))
+                        """, (class_name, description, level, duration, start_time, capacity, image_url, coach_id, class_id))  # Updated query
                 mysql.connection.commit()
                 flash("Class updated successfully!", "success")
 
@@ -103,7 +105,6 @@ def manage_classes():
                 action='delete',
                 notification_id=5
             )
-
 
         # Registering a patient to a class
         elif 'register_patient' in request.form:

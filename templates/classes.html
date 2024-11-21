@@ -51,6 +51,11 @@
         </div>
 
         <div class="form-group">
+            <label for="image_url">Image URL (Optional)</label> <!-- Added -->
+            <input type="text" class="form-control" name="image_url" id="image_url">
+        </div>
+
+        <div class="form-group">
             <label for="coach_id">Assign Coach (Optional)</label>
             <select class="form-control" name="coach_id" id="coach_id">
                 <option value="">Select a coach</option>
@@ -74,6 +79,7 @@
                 <th>Duration</th>
                 <th>Start Time</th>
                 <th>Capacity</th>
+                <th>Image</th> <!-- Added -->
                 <th>Assigned Coach</th>
                 <th>Registered Patients</th>
                 <th>Actions</th>
@@ -89,10 +95,17 @@
                     <td>{{ class.start_time }}</td>
                     <td>{{ class.capacity }}</td>
                     <td>
+                        {% if class.image_url %}
+                            <img src="{{ class.image_url }}" alt="Class Image" style="width: 100px; height: auto;">
+                        {% else %}
+                            <em>No Image</em>
+                        {% endif %}
+                    </td>
+                    <td>
                         {% if class.coach_id %}
                             {% for coach in coaches %}
                                 {% if coach.coach_id == class.coach_id %}
-                                    <li>{{ coach.last_name }} {{ coach.username}}</li>
+                                    <li>{{ coach.last_name }} {{ coach.username }}</li>
                                 {% endif %}
                             {% endfor %}
                         {% else %}
@@ -100,25 +113,24 @@
                         {% endif %}
                     </td>
                     <td>
-                    <ul>
-                        {% for patient in class_registrations[class.class_id] %}
-                            <li>
-                                {{ patient.first_name }} {{ patient.last_name }}
+                        <ul>
+                            {% for patient in class_registrations[class.class_id] %}
+                                <li>
+                                    {{ patient.first_name }} {{ patient.last_name }}
 
-                                <!-- Drop Patient Button -->
-                                <form action="{{ url_for('admin_classes.manage_classes') }}" method="POST" style="display:inline;">
-                                    <input type="hidden" name="patient_id" value="{{ patient.patient_id }}">
-                                    <input type="hidden" name="class_id" value="{{ class.class_id }}">
-                                    <input type="hidden" name="delete_patient" value="true">
-                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to remove this patient from the class?');">
-                                        Drop Patient
-                                    </button>
-                                </form>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </td>
-
+                                    <!-- Drop Patient Button -->
+                                    <form action="{{ url_for('admin_classes.manage_classes') }}" method="POST" style="display:inline;">
+                                        <input type="hidden" name="patient_id" value="{{ patient.patient_id }}">
+                                        <input type="hidden" name="class_id" value="{{ class.class_id }}">
+                                        <input type="hidden" name="delete_patient" value="true">
+                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to remove this patient from the class?');">
+                                            Drop Patient
+                                        </button>
+                                    </form>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </td>
                     <td>
                         <!-- Form to Register Patient -->
                         <form action="{{ url_for('admin_classes.manage_classes') }}" method="POST" class="mb-2">
@@ -157,6 +169,7 @@
                             <input type="hidden" name="duration" value="{{ class.duration }}">
                             <input type="hidden" name="start_time" value="{{ class.start_time }}">
                             <input type="hidden" name="capacity" value="{{ class.capacity }}">
+                            <input type="hidden" name="image_url" value="{{ class.image_url }}"> <!-- Added -->
                             <input type="hidden" name="coach_id" value="{{ class.coach_id }}">
                             <button type="button" class="btn btn-warning btn-sm"
                             onclick="populateEditForm({
@@ -167,6 +180,7 @@
                                 duration: '{{ class.duration }}',
                                 start_time: '{{ class.start_time }}',
                                 capacity: '{{ class.capacity }}',
+                                image_url: '{{ class.image_url }}', <!-- Added -->
                                 coach_id: '{{ class.coach_id }}'
                                  })">
                                 Edit
@@ -184,7 +198,7 @@
             {% endfor %}
         </tbody>
     </table>
-    <!-- Link back to Admin Dashboard at the bottom (optional) -->
+    <!-- Link back to Admin Dashboard -->
     <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-secondary">Back to Admin Dashboard</a>
 </div>
 
@@ -197,6 +211,7 @@
         document.getElementById('duration').value = classData.duration;
         document.getElementById('start_time').value = classData.start_time;
         document.getElementById('capacity').value = classData.capacity;
+        document.getElementById('image_url').value = classData.image_url || ''; <!-- Added -->
         document.getElementById('coach_id').value = classData.coach_id || '';
 
         // Change the form action to edit the class instead of adding a new one

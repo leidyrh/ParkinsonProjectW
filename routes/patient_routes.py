@@ -149,7 +149,7 @@ def view_classes():
 
     # Fetch classes and check if the patient is enrolled
     cur.execute("""
-        SELECT c.*,
+        SELECT c.*, c.image_url,
                CASE WHEN pc.patient_id IS NOT NULL THEN TRUE ELSE FALSE END AS booked,
                c.capacity AS remaining_capacity
         FROM classes c
@@ -159,6 +159,7 @@ def view_classes():
     cur.close()
 
     return render_template('patient_view_classes.html', classes=classes)
+
 
 
 @patient_bp.route('/book_class', methods=['POST'])
