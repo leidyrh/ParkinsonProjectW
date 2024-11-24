@@ -25,18 +25,31 @@
             display: flex;
             flex-direction: column;
             padding: 20px;
-            background-color: #e9ecef;
-        }
-        .patient-item {
-            padding: 10px;
-            margin-bottom: 15px;
-            cursor: pointer;
-            border-radius: 8px;
-            transition: background-color 0.3s;
-        }
-        .patient-item:hover {
-            background-color: #e1e1e1;
-        }
+    background-color: #e9ecef;
+}
+patient-item {
+    background-color: #e0e0e0;  
+    border: 1px solid #ccc;  
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 8px;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+}
+.patient-button {
+    background-color: #e8e6e6; /* Grey color */
+}
+
+.patient-item p {
+    margin: 5px 0;
+    color: #333;  
+}
+
+
+.patient-item:hover {
+    background-color: #d3d3d3;  
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);  
+}
         .message-history {
             flex: 1;
             padding: 15px;
@@ -60,7 +73,7 @@
         }
         .sent {
             align-self: flex-end;
-            background-color: #007bff;
+            background-color: #f2a900;
             color: white;
             border-top-right-radius: 0;
         }
@@ -100,13 +113,13 @@
             padding: 10px 20px;
             font-size: 14px;
             border: none;
-            background-color: #007bff;
+            background-color: #FFA500;
             color: white;
             border-radius: 15px;
             cursor: pointer;
         }
         button:hover {
-            background-color: #0056b3;
+            background-color: #f9d180;
         }
         /* Back button styling */
         .back-button {
@@ -115,15 +128,16 @@
             padding: 10px;
             font-size: 14px;
             text-align: center;
-            background-color: #007bff;
+            background-color: #FFA500;
             color: white;
             border-radius: 10px;
             text-decoration: none;
             cursor: pointer;
         }
         .back-button:hover {
-            background-color: #0056b3;
+            background-color: #ff9800;
         }
+        
     </style>
 </head>
 <body>
@@ -131,13 +145,13 @@
 <div class="container">
     <!-- Sidebar with Patient List -->
     <div class="sidebar">
-        <h2>Patient List</h2>
+        <h2>Member List</h2>
         {% if patients %}
             {% for patient in patients %}
-                <div class="patient-item" onclick="loadMessages({{ patient.user_id }})">
+                <button class="patient-button patient-item" onclick="loadMessages('{{ patient.user_id }}')" onkeypress="if(event.key === 'Enter') loadMessages('{{ patient.user_id }}')" tabindex="0">
                     <p><strong>{{ patient.first_name }}</strong></p>
                     <p>{{ patient.email }}</p>
-                </div>
+                </button>
             {% endfor %}
         {% else %}
             <p>No patients found.</p>
@@ -148,6 +162,8 @@
 
     <!-- Main Content Area with Message Interface -->
     <div class="content">
+
+ 
         <h2>Messages</h2>
         <div id="messageHistory" class="message-history">
             <!-- Messages will be dynamically loaded here -->
@@ -162,7 +178,7 @@
 
 <script>
     let selectedPatientId = null;
-    const userId = {{ session['user_id'] }};
+    const userId = "{{ session['user_id'] }}";
 
     // Function to load messages for a selected patient
     function loadMessages(patientId) {
@@ -173,6 +189,7 @@
             .then(data => {
                 const messageHistory = document.getElementById('messageHistory');
                 messageHistory.innerHTML = '';  // Clear current messages
+
 
                 data.forEach(message => {
                     const messageDiv = document.createElement('div');
