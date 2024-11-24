@@ -29,6 +29,23 @@
             flex-direction: column;
             background-color: #e9ecef;
         }
+        .chat-header {
+            padding: 15px;
+            border-bottom: 1px solid #ddd;
+            background-color: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .chat-header h3 {
+            font-size: 18px;
+            color: #333;
+        }
+        .chat-header .status {
+            font-size: 14px;
+            color: #888;
+        }
+
         .message-history {
             flex: 1;
             padding: 20px;
@@ -38,31 +55,31 @@
             gap: 10px;
         }
         .message-form {
-            padding: 10px;
+            padding: 15px;
             border-top: 1px solid #ddd;
             display: flex;
             align-items: center;
-            background-color: #ffffff;
+            background-color: #f5f5f5;
         }
         .message-form textarea {
             flex: 1;
             padding: 10px;
             font-size: 14px;
-            border-radius: 15px;
+            border-radius: 20px;
             border: 1px solid #ccc;
             margin-right: 10px;
         }
         .message-form button {
             padding: 10px 20px;
             font-size: 14px;
-            background-color: #007bff;
+            background-color: #FFA500;
             color: white;
             border: none;
-            border-radius: 15px;
+            border-radius: 20px;
             cursor: pointer;
         }
         .message-form button:hover {
-            background-color: #0056b3;
+            background-color: #ff8800;
         }
 
         /* Message bubble styling */
@@ -110,7 +127,7 @@
             padding: 10px;
             font-size: 14px;
             text-align: center;
-            background-color: #007bff;
+            background-color: #FFA500;
             color: white;
             border-radius: 10px;
             text-decoration: none;
@@ -136,6 +153,10 @@
 
     <!-- Chat Area -->
     <div class="chat-area">
+        <div class="chat-header">
+            <h3>Chat with <span id="recipientName">[Recipient]</span></h3>
+            <span class="status">Online</span>
+        </div>
         <!-- Message History Container -->
         <div class="message-history" id="messageHistory">
             <!-- Messages will be dynamically loaded here -->
@@ -153,7 +174,7 @@
     let selectedRecipientId = null;
 
     // Set userId from session in JavaScript
-    const userId = {{ session['user_id'] }};
+    const userId = "{{ session['user_id'] }}";
 
     // Load the list of users who messaged the patient
     function loadContacts() {
