@@ -338,8 +338,6 @@ def track_symptoms():
     return render_template('patient_track_symptoms.html', symptoms=symptoms)
 
 
-
-
 @patient_bp.route('/messages', methods=['GET', 'POST'])
 def manage_patient_messages():
     # Ensure the user is logged in and is a patient
@@ -356,14 +354,19 @@ def manage_patient_messages():
     # Handle fetching messages when action is 'fetch'
     if request.method == 'GET' and action == 'fetch':
         try:
+            recipient_id = request.args.get('recipient_id', type=int)
+            if not recipient_id:
+                return jsonify({"error": "Recipient ID is required"}), 400
+
             cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-            # Fetch all messages where the patient is either the sender or the recipient
+            # Fetch messages between the patient and the selected sender
             cur.execute("""
                 SELECT sender_id, recipient_id, content, timestamp
                 FROM messages
-                WHERE sender_id = %s OR recipient_id = %s
+                WHERE (sender_id = %s AND recipient_id = %s)
+                   OR (sender_id = %s AND recipient_id = %s)
                 ORDER BY timestamp ASC
-            """, (patient_id, patient_id))
+            """, (recipient_id, patient_id, patient_id, recipient_id))
             messages = cur.fetchall()
             cur.close()
 
@@ -407,28 +410,4 @@ def manage_patient_messages():
     # Handle sending messages when action is 'send'
     if request.method == 'POST' and action == 'send':
         data = request.get_json()
-        content = data.get('content')
-        recipient_id = data.get('recipient_id')  # Get recipient_id from the request data
-
-        if not content:
-            return jsonify({"error": "Message content cannot be empty"}), 400
-        if not recipient_id:
-            return jsonify({"error": "Recipient ID is required"}), 400
-
-        try:
-            cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-            cur.execute("""
-                INSERT INTO messages (sender_id, recipient_id, content, timestamp)
-                VALUES (%s, %s, %s, NOW())
-            """, (patient_id, recipient_id, content))
-            mysql.connection.commit()
-            cur.close()
-
-            return jsonify({"message": "Message sent successfully"}), 201
-        except Exception as e:
-            print("Error sending message:", e)
-            return jsonify({"error": "Failed to send message"}), 500
-
-    return jsonify({"error": "Invalid action or method"}), 400
-
 

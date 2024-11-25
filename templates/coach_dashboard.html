@@ -9,14 +9,14 @@
 <body>
 
 <div class="container mt-5">
-    
-     <!-- logo -->
-     <div class="text-center mb-4">
-        <img src="{{ url_for('static', filename='KatzJCCLogo.png') }}" alt="Katz JCC Logo">
+    <!-- Logo -->
+    <div class="text-center mb-4">
+        <img src="{{ url_for('static', filename='KatzJCCLogo.png') }}" alt="Katz JCC Logo" style="max-width: 200px;">
     </div>
-    <h1>Coach Dashboard</h1>
 
-    <!-- Flash messages -->
+    <h1 class="mb-4">Welcome, {{ coach.first_name }}</h1>
+
+    <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             <div class="alert alert-{{ messages[0][0] }}">
@@ -25,66 +25,87 @@
         {% endif %}
     {% endwith %}
 
-    <div class="row mt-4">
-        <!-- Assessment Forms Section -->
-        <div class="col-md-6">
-            <h3>Assessment Forms</h3>
-
-            <!-- Form to Fill Out Assessment Document -->
-            <form method="POST" action="{{ url_for('coach.submit_assessment') }}">
-                <div class="mb-3">
-                    <label for="assessment_name" class="form-label">Assessment Document</label>
-                    <select class="form-select" name="assessment_name" id="assessment_name" required>
-                        <option value="">Select an assessment document</option>
-                        {% for document in documents %}
-                            <option value="{{ document.id }}">{{ document.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label for="assessment_data" class="form-label">Fill Out the Assessment</label>
-                    <textarea class="form-control" name="assessment_data" id="assessment_data" rows="4" required></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary">Submit Assessment</button>
-            </form>
-        </div>
-
-        <!-- List of Completed Assessments -->
-        <div class="col-md-6">
-            <h3>Completed Assessments</h3>
+    <!-- Your Classes -->
+    <div class="mb-4">
+        <h2>Your Classes</h2>
+        {% if classes %}
             <table class="table table-striped">
                 <thead>
                     <tr>
-                        <th>Document Name</th>
-                        <th>Submitted By</th>
+                        <th>Class Name</th>
+                        <th>Start Time</th>
+                        <th>Duration</th>
+                        <th>Capacity</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for assessment in assessments %}
+                    {% for class in classes %}
                         <tr>
-                            <td>{{ assessment.document_name }}</td>
-                            <td>{{ assessment.coach_username }}</td>
+                            <td>{{ class.class_name }}</td>
+                            <td>{{ class.start_time }}</td>
+                            <td>{{ class.duration }}</td>
+                            <td>{{ class.capacity }}</td>
                             <td>
-                                <form action="{{ url_for('coach.view_assessment') }}" method="GET" style="display:inline;">
-                                    <input type="hidden" name="assessment_id" value="{{ assessment.id }}">
-                                    <button type="submit" class="btn btn-info btn-sm">View</button>
-                                </form>
-                                <form action="{{ url_for('coach.delete_assessment') }}" method="POST" style="display:inline;">
-                                    <input type="hidden" name="assessment_id" value="{{ assessment.id }}">
-                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                                </form>
+                                <a href="{{ url_for('coach.view_class_patients', class_id=class.class_id) }}" class="btn btn-info btn-sm">
+                                    View Patients
+                                </a>
                             </td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
-        </div>
+        {% else %}
+            <p>No classes assigned to you yet.</p>
+        {% endif %}
+    </div>
+    <!-- Patients Section -->
+    <div class="mb-4">
+        <h2>Patients in Your Classes</h2>
+        {% if patients %}
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Patient First Name</th>
+                        <th>Patient Last Name</th>
+                        <th>Email</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for patient in patients %}
+                        <tr>
+                            <td>{{ patient.firs_name }}</td>
+                            <td>{{ patient.Last_name }}</td>
+                            <td>{{ patient.email }}</td>
+                            <td>
+                                <a href="{{ url_for('coach.create_assessment', patient_id=patient.patient_id) }}"
+                                   class="btn btn-primary btn-sm">
+                                    Create Assessment
+                                </a>
+                            </td>
+                            <td>
+                            <a href="{{ url_for('coach.view_patient_assessments', patient_id=patient.patient_id) }}"
+                               class="btn btn-info btn-sm">View Assessments</a>
+                            </td>
+
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No patients are currently registered in your classes.</p>
+        {% endif %}
+    </div>
+    <!-- Messages Button -->
+    <div class="text-center mb-4">
+        <a href="{{ url_for('coach.manage_messages') }}" class="btn btn-info btn-lg">Messages</a>
     </div>
 
+    <!-- Logout Button -->
     <a href="{{ url_for('coach.logout') }}" class="btn btn-secondary">Logout</a>
 </div>
 
+
 </body>
 </html>
-

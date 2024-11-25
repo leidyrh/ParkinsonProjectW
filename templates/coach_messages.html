@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coach Messages</title>
+    <style>
+        /* Basic styling for layout and message display */
+        .container {
+            display: flex;
+            height: 100vh;
+            width: 100%;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+        }
+        .sidebar {
+            width: 30%;
+            padding: 20px;
+            overflow-y: auto;
+            border-right: 1px solid #ddd;
+            background-color: #fff;
+        }
+        .content {
+            width: 70%;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            background-color: #e9ecef;
+        }
+        .patient-item {
+            padding: 10px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background-color 0.3s;
+        }
+        .patient-item:hover {
+            background-color: #e1e1e1;
+        }
+        .message-history {
+            flex: 1;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        /* Message bubble styling */
+        .message {
+            max-width: 60%;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            line-height: 1.5;
+            position: relative;
+            word-wrap: break-word;
+            display: inline-block;
+        }
+        .sent {
+            align-self: flex-end;
+            background-color: #007bff;
+            color: white;
+            border-top-right-radius: 0;
+        }
+        .received {
+            align-self: flex-start;
+            background-color: #f1f1f1;
+            color: black;
+            border-top-left-radius: 0;
+        }
+        /* Timestamp styling */
+        .timestamp {
+            display: block;
+            font-size: 12px;
+            margin-top: 5px;
+            color: #666;
+            text-align: right;
+        }
+        .message-form {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-top: 1px solid #ddd;
+            background-color: #fff;
+            border-radius: 8px;
+        }
+        textarea {
+            flex: 1;
+            height: 50px;
+            padding: 10px;
+            font-size: 14px;
+            border-radius: 15px;
+            border: 1px solid #ccc;
+            margin-right: 10px;
+            resize: none;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 14px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 15px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        /* Back button styling */
+        .back-button {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px;
+            font-size: 14px;
+            text-align: center;
+            background-color: #007bff;
+            color: white;
+            border-radius: 10px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .back-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Sidebar with Patient List -->
+    <div class="sidebar">
+        <h2>Patients in Your Classes</h2>
+        {% if patients %}
+            {% for patient in patients %}
+                <div class="patient-item" onclick="loadMessages({{ patient.patient_id }})">
+                    <p><strong>{{ patient.name }}</strong></p>
+                    <p>{{ patient.email }}</p>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No patients found.</p>
+        {% endif %}
+        <!-- Back to Dashboard button -->
+        <a href="{{ url_for('coach.coach_dashboard') }}" class="back-button">Back to Dashboard</a>
+    </div>
+
+    <!-- Main Content Area with Message Interface -->
+    <div class="content">
+        <h2>Messages</h2>
+        <div id="messageHistory" class="message-history">
+            <!-- Messages will be dynamically loaded here -->
+        </div>
+
+        <div class="message-form">
+            <textarea id="messageContent" placeholder="Type your message here..." required></textarea>
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let selectedPatientId = null;
+    const userId = {{ session['user_id'] }};
+
+    // Function to load messages for a selected patient
+    function loadMessages(patientId) {
+        selectedPatientId = patientId;
+
+        fetch(`/coach/manage_messages?action=fetch&patient_id=${patientId}`)
+            .then(response => response.json())
+            .then(data => {
+                const messageHistory = document.getElementById('messageHistory');
+                messageHistory.innerHTML = '';  // Clear current messages
+
+                data.forEach(message => {
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = 'message ' + (message.sender_id == userId ? 'sent' : 'received');
+                    messageDiv.innerHTML = `<p>${message.content}</p><span class="timestamp">${message.timestamp}</span>`;
+                    messageHistory.appendChild(messageDiv);
+                });
+
+                messageHistory.scrollTop = messageHistory.scrollHeight;  // Scroll to the bottom
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    // Function to send a message to the selected patient
+    function sendMessage() {
+        if (selectedPatientId === null) {
+            alert('Please select a patient to message.');
+            return;
+        }
+
+        const content = document.getElementById('messageContent').value;
+        fetch(`/coach/manage_messages?action=send&patient_id=${selectedPatientId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: content })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                document.getElementById('messageContent').value = '';  // Clear input
+                loadMessages(selectedPatientId);  // Reload messages after sending
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+</script>
+
+</body>
+</html>
