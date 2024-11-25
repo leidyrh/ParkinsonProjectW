@@ -91,7 +91,7 @@
         <a href="{{ url_for('admin.list_coaches') }}" class="nav-link">Manage Coaches</a>
         <a href="{{ url_for('admin_classes.manage_classes') }}" class="nav-link">Manage Classes</a>
         <a href="{{ url_for('admin.manage_messages') }}" class="nav-link">Messages</a>
-        <a href="{{ url_for('admin.user_management') }}" class="nav-link">User Management</a> <!-- New Link -->
+
         <a href="{{ url_for('auth.logout') }}" class="nav-link">Logout</a>
     </nav>
 </div>
@@ -152,33 +152,6 @@
             <button type="submit" class="btn btn-primary">Create Patient</button>
         </form>
     </div>
-
-    <!-- Assign Role Section -->
-    <div class="form-section">
-        <h3>Assign Role to User</h3>
-        <form method="POST">
-            <input type="hidden" name="action" value="assign_role">
-            <div class="mb-3">
-                <label for="user_id" class="form-label">Select User</label>
-                <select class="form-select" name="user_id" id="user_id" required>
-                    <option value="">Choose a user</option>
-                    {% for user in users %}
-                        <option value="{{ user.user_id }}">{{ user.username }} ({{ user.role }})</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="mb-3">
-                <label for="new_role" class="form-label">New Role</label>
-                <select class="form-select" name="new_role" id="new_role" required>
-                    <option value="admin">Admin</option>
-                    <option value="patient">Patient</option>
-                    <option value="coach">Coach</option>
-                </select>
-            </div>
-            <button type="submit" class="btn btn-secondary">Assign Role</button>
-        </form>
-    </div>
-</div>
     <!-- User Management Table -->
     <h3>Users List</h3>
     <table class="table table-striped">
