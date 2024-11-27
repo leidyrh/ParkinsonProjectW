@@ -95,48 +95,39 @@ def admin_dashboard():
                         return redirect(url_for('admin.admin_dashboard'))
 
                 elif new_role == 'patient':
-                    # Check if the user is currently a coach and remove them from the `coach` table
-                    cur.execute("SELECT * FROM coach WHERE coach_id = %s", (user_id,))
-                    existing_coach = cur.fetchone()
-
-                    if existing_coach:
-                        try:
-                            cur.execute("DELETE FROM coach WHERE coach_id = %s", (user_id,))
-                            mysql.connection.commit()
-                            flash("User removed from coach role.", "info")
-                        except Exception as e:
-                            mysql.connection.rollback()
-                            flash("An error occurred while removing the coach role.", "danger")
-                            print("Error:", e)
-                            return redirect(url_for('admin.manage_classes'))
-
-                    # Check if the user is already a patient
-                    cur.execute("SELECT * FROM patients WHERE user_id = %s", (user_id,))
-                    existing_patient = cur.fetchone()
-
-                    if existing_patient:
-                        flash("This user is already a patient.", "info")
-                    else:
-                        try:
-                            # Insert user into patients table
-                            cur.execute("INSERT INTO patients (user_id) VALUES (%s)", (user_id,))
-                            mysql.connection.commit()  # Commit the transaction
-                            flash("Patient role assigned successfully!", "success")
-                        except Exception as e:
-                            mysql.connection.rollback()  # Rollback in case of error
-                            flash("An error occurred while assigning the patient role.", "danger")
-                            print("Error:", e)
-                            return redirect(url_for('admin.manage_classes'))
-
-                    # Update the role in the `users` table to 'patient'
                     try:
+                        # Check if the user exists
+                        cur.execute("SELECT role, username FROM users WHERE user_id = %s", (user_id,))
+                        user_data = cur.fetchone()
+
+                        if not user_data:
+                            flash("User not found.", "danger")
+                            return redirect(url_for('admin.admin_dashboard'))
+
+                        current_role, username = user_data
+
+                        # Remove from coach table if the user is currently a coach
+                        if current_role == 'coach':
+                            cur.execute("DELETE FROM coach WHERE coach_id = %s", (user_id,))
+                            flash("User removed from coach role.", "info")
+
+                        # Insert into patients table if not already a patient
+                        cur.execute("SELECT * FROM patients WHERE user_id = %s", (user_id,))
+                        if not cur.fetchone():
+                            cur.execute("INSERT INTO patients (user_id, username) VALUES (%s, %s)", (user_id, username))
+                            flash("Patient role assigned successfully!", "success")
+                        else:
+                            flash("This user is already a patient.", "info")
+
+                        # Update the role in the `users` table
                         cur.execute("UPDATE users SET role = %s WHERE user_id = %s", ('patient', user_id))
-                        mysql.connection.commit()  # Commit the transaction
+                        mysql.connection.commit()  # Commit all changes
                         flash("User role updated to patient in users table.", "success")
                     except Exception as e:
-                        mysql.connection.rollback()  # Rollback in case of error
+                        mysql.connection.rollback()  # Rollback if any error occurs
                         flash("An error occurred while updating the user role.", "danger")
                         print("Error:", e)
+
 
                 elif new_role == 'coach':
                     # Check if the user is currently a patient and remove them from the `patients` table
