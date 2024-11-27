@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Assessment</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+
+<div class="container mt-5">
+    <!-- Logo -->
+    <div class="text-center mb-4">
+        <img src="{{ url_for('static', filename='KatzJCCLogo.png') }}" alt="Katz JCC Logo">
+    </div>
+
+    <h1>Create Assessment for {{ patient.name }}</h1>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="alert alert-{{ messages[0][0] }}">
+                {{ messages[0][1] }}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+        <div class="mb-3">
+            <label for="assessment_name" class="form-label">Assessment Name</label>
+            <input type="text" id="assessment_name" name="assessment_name" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label for="assessment_data" class="form-label">Assessment Data</label>
+            <textarea id="assessment_data" name="assessment_data" class="form-control" rows="5" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit Assessment</button>
+        <a href="{{ url_for('coach.coach_dashboard') }}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+
+</body>
+</html>
+

@@ -5,80 +5,154 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #ffffff;
+        }
+        .header {
+            background-color: #ffffff;
+            border-bottom: 1px solid #dee2e6;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header img {
+            height: 50px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #78818e;
+        }
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            background-color: #343a40;
+            color: #fff;
+            position: fixed;
+            top: 0;
+            left: 0;
+            padding: 15px 0;
+        }
+        .sidebar .nav-link {
+            color: #fff;
+            margin: 10px 0;
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: block;
+            text-decoration: none;
+        }
+        .sidebar .nav-link:hover {
+            background-color: #495057;
+            color: #ffc107;
+        }
+        .dashboard-content {
+            margin-left: 250px;
+            padding: 30px;
+        }
+        .card {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: none;
+        }
+        .card h5 {
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        .card .count {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .card .icon {
+            font-size: 40px;
+            color: #007bff;
+        }
+        .table-actions .btn {
+            margin-right: 5px;
+        }
+    </style>
 </head>
 <body>
 
-<div class="container mt-5">
-    <!-- logo -->
-    <div class="text-center mb-4">
-        <img src="{{ url_for('static', filename='KatzJCCLogo.png') }}" alt="Katz JCC Logo">
-    </div>
-
+<!-- Header -->
+<div class="text-center mb-4">
     <h1>Admin Dashboard</h1>
+</div>
 
-    <!-- Flash messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="alert alert-{{ messages[0][0] }}">
-                {{ messages[0][1] }}
+<!-- Sidebar -->
+<div class="sidebar">
+    <div class="text-center mb-4">
+        <img src="{{ url_for('static', filename='KatzJCCLogo.png') }}" alt="Logo" style="height: 40px;">
+    </div>
+    <nav>
+        <a href="#" class="nav-link">Dashboard</a>
+        <a href="{{ url_for('admin.list_patients') }}" class="nav-link">Manage Members</a>
+        <a href="{{ url_for('admin.list_coaches') }}" class="nav-link">Manage Coaches</a>
+        <a href="{{ url_for('admin_classes.manage_classes') }}" class="nav-link">Manage Classes</a>
+        <a href="{{ url_for('admin.manage_messages') }}" class="nav-link">Messages</a>
+
+        <a href="{{ url_for('auth.logout') }}" class="nav-link">Logout</a>
+    </nav>
+</div>
+
+<!-- Dashboard Content -->
+<div class="dashboard-content">
+    <!-- Top Row Cards -->
+    <div class="row">
+        <div class="col-md-3 mb-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="icon">&#128101;</div>
+                    <h5>Members</h5>
+                    <p class="count">{{ patient_count }}</p>
+                    <a href="{{ url_for('admin.list_patients') }}" class="btn btn-primary btn-sm">Patients</a>
+                </div>
             </div>
-        {% endif %}
-    {% endwith %}
-
-    <div class="row mt-4">
-
-        <!-- Create Patient Form -->
-        <div class="col-md-6">
-            <h3>Create New Patient</h3>
-            <form method="POST">
-                <input type="hidden" name="action" value="create_patient">
-                <div class="mb-3">
-                    <label for="username" class="form-label">Username</label>
-                    <input type="text" class="form-control" name="username" id="username" required>
-                </div>
-                <div class="mb-3">
-                    <label for="password" class="form-label">Password</label>
-                    <input type="password" class="form-control" name="password" id="password" required>
-                </div>
-                <div class="mb-3">
-                    <label for="email" class="form-label">Email</label>
-                    <input type="email" class="form-control" name="email" id="email" required>
-                </div>
-                <button type="submit" class="btn btn-primary">Create Patient</button>
-            </form>
         </div>
-
-        <!-- Assign Role Form -->
-        <div class="col-md-6">
-            <h3>Assign Role to User</h3>
-            <form method="POST">
-                <input type="hidden" name="action" value="assign_role">
-                <div class="mb-3">
-                    <label for="user_id" class="form-label">Select User</label>
-                    <select class="form-select" name="user_id" id="user_id" required>
-                        <option value="">Choose a user</option>
-                        {% for user in users %}
-                            <option value="{{ user.user_id }}">{{ user.username }} ({{ user.role }})</option>
-                        {% endfor %}
-                    </select>
+        <div class="col-md-3 mb-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="icon">&#128100;</div>
+                    <h5>Coaches</h5>
+                    <p class="count">{{ coach_count }}</p>
+                    <a href="{{ url_for('admin.list_coaches') }}" class="btn btn-primary btn-sm">Coaches</a>
                 </div>
-                <div class="mb-3">
-                    <label for="new_role" class="form-label">New Role</label>
-                    <select class="form-select" name="new_role" id="new_role" required>
-                        <option value="admin">Admin </option>
-                        <option value="patient">Patient</option>
-                        <option value="coach">Coach </option>
-
-                    </select>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="icon">&#128172;</div>
+                    <h5>Messages</h5>
+                    <p class="count">{{ messages_count }}</p>
+                    <a href="{{ url_for('admin.manage_messages') }}" class="btn btn-primary btn-sm">Messages</a>
                 </div>
-                <button type="submit" class="btn btn-secondary">Assign Role</button>
-            </form>
+            </div>
         </div>
     </div>
 
-    <hr>
-
-    <!-- Users List -->
+ <!-- Create Patient Section -->
+    <div class="form-section">
+        <h3>Create New Patient</h3>
+        <form method="POST">
+            <input type="hidden" name="action" value="create_patient">
+            <div class="mb-3">
+                <label for="username" class="form-label">Username</label>
+                <input type="text" class="form-control" name="username" id="username" required>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" class="form-control" name="password" id="password" required>
+            </div>
+            <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" class="form-control" name="email" id="email" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Create Patient</button>
+        </form>
+    </div>
+    <!-- User Management Table -->
     <h3>Users List</h3>
     <table class="table table-striped">
         <thead>
@@ -92,12 +166,10 @@
         <tbody>
             {% for user in users %}
                 <tr>
-                    <td>{{ user.user_id }}</td>  <!-- ID -->
-                    <td>{{ user.username }}</td>  <!-- Username -->
-                    <td>{{ user.role }}</td>  <!-- Role -->
-
-                    <!-- Assign Role Form for Each User -->
-                    <td>
+                    <td>{{ user.user_id }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.role }}</td>
+                    <td class="table-actions">
                         <form action="{{ url_for('admin.admin_dashboard') }}" method="POST" style="display:inline;">
                             <input type="hidden" name="action" value="assign_role">
                             <input type="hidden" name="user_id" value="{{ user.user_id }}">
@@ -108,10 +180,7 @@
                             </select>
                             <button type="submit" class="btn btn-info btn-sm">Assign Role</button>
                         </form>
-
-                        <!-- Delete User Form -->
-                        <form action="{{ url_for('admin.admin_dashboard') }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete the user?');">
-
+                        <form action="{{ url_for('admin.admin_dashboard') }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this user?');">
                             <input type="hidden" name="action" value="delete_user">
                             <input type="hidden" name="user_id" value="{{ user.user_id }}">
                             <button type="submit" class="btn btn-danger btn-sm">Delete</button>
@@ -121,14 +190,7 @@
             {% endfor %}
         </tbody>
     </table>
-
-        <div class="mt-4">
-            <a href="{{ url_for('admin.manage_messages') }}" class="btn btn-secondary">Messages</a>
-            <a href="{{ url_for('auth.logout') }}" class="btn btn-danger btn-sm">Logout</a>
-            <a href="{{ url_for('admin.list_patients') }}" class="btn btn-secondary"> List of Patients</a>
-            <a href="{{ url_for('admin.list_coaches') }}" class="btn btn-secondary"> List of Coaches</a>
-            <a href="{{ url_for('admin_classes.manage_classes') }}" class="btn btn-primary"> Manage Classes</a>
-        </div>
 </div>
+
 </body>
 </html>

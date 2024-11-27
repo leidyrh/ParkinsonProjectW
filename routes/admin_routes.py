@@ -23,6 +23,13 @@ def admin_dashboard():
     cur.execute("SELECT role FROM users WHERE user_id = %s", (session['user_id'],))
     user = cur.fetchone()
 
+    # Fetch counts
+    cur.execute("SELECT COUNT(*) AS count FROM users WHERE role = 'patient'")
+    patient_count = cur.fetchone()['count']
+
+    cur.execute("SELECT COUNT(*) AS count FROM users WHERE role = 'coach'")
+    coach_count = cur.fetchone()['count']
+
     if user and user['role'] == 'admin':
         # Retrieve all users from the database
         cur.execute("SELECT user_id, username, role FROM users")
@@ -201,7 +208,7 @@ def admin_dashboard():
 
         # After handling each action, re-fetch the updated patient lists. NEEDED FOR MESSAGING LR
         cur.execute("""
-                            SELECT users.user_id, users.username, users.email, patients.first_name, patients.dob,                                        patients.gender, patients.phone, patients.address, patients.health_condition
+                            SELECT users.user_id, users.username, users.email, patients.first_name, patients.dob,patients.gender, patients.phone, patients.address, patients.health_condition
                                 FROM users
                                 JOIN patients ON users.user_id = patients.user_id
                                 WHERE users.role = 'patient'
@@ -211,7 +218,7 @@ def admin_dashboard():
         # print("Fetched patients:", patients)
         cur.close()
 
-        return render_template('admin_dashboard.html', users=users, patients=patients)
+        return render_template('admin_dashboard.html', users=users, patients=patients, patient_count=patient_count, coach_count=coach_count)
 
     else:
         flash('You do not have permission to access the admin dashboard.', 'danger')
@@ -388,9 +395,6 @@ def edit_coach_profile(user_id):
         phone = request.form['phone']
         specialization = request.form['specialization']
 
-
-
-        # Update the `users` and `patients` tables
         try:
             # Update the users table
             cur.execute("""
@@ -404,7 +408,7 @@ def edit_coach_profile(user_id):
                 UPDATE coach 
                 SET first_name = %s, last_name = %s, specialization = %s, 
                     phone = %s 
-                WHERE user_id = %s
+                WHERE coach_id = %s
             """, ( first_name,last_name, specialization,phone, user_id))
 
             mysql.connection.commit()

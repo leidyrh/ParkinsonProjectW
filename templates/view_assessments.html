@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Assessments</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+
+<div class="container mt-5">
+    <h1>Assessments for {{ patient.name }}</h1>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="alert alert-{{ messages[0][0] }}">
+                {{ messages[0][1] }}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    {% if assessment %}
+        <!-- Detailed View with Edit Form -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h2>Edit Assessment: {{ assessment.assessment_name }}</h2>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('coach.view_patient_assessments', patient_id=patient.patient_id, assessment_id=assessment.id) }}">
+                    <input type="hidden" name="assessment_id" value="{{ assessment.id }}">
+                    <div class="mb-3">
+                        <label for="assessment_name" class="form-label">Assessment Name</label>
+                        <input type="text" class="form-control" id="assessment_name" name="assessment_name" value="{{ assessment.assessment_name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="assessment_data" class="form-label">Assessment Details</label>
+                        <textarea class="form-control" id="assessment_data" name="assessment_data" rows="5" required>{{ assessment.assessment_data }}</textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update Assessment</button>
+                </form>
+            </div>
+        </div>
+        <a href="{{ url_for('coach.view_patient_assessments', patient_id=patient.patient_id) }}"
+           class="btn btn-secondary">Back to Assessments</a>
+    {% else %}
+        <!-- List of All Assessments -->
+        {% if assessments %}
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Assessment Name</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for assessment in assessments %}
+                        <tr>
+                            <td>{{ assessment.assessment_name }}</td>
+                            <td>{{ assessment.timestamp }}</td>
+                            <td>
+                                <a href="{{ url_for('coach.view_patient_assessments', patient_id=patient.patient_id, assessment_id=assessment.id) }}"
+                                   class="btn btn-info btn-sm">View/Edit</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No assessments have been made for this patient yet.</p>
+        {% endif %}
+        <a href="{{ url_for('coach.coach_dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+    {% endif %}
+</div>
+
+</body>
+</html>
+

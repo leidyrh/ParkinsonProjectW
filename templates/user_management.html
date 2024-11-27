@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container mt-5">
+    <h1 class="mb-4">User Management</h1>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="alert alert-{{ messages[0][0] }}">
+                {{ messages[0][1] }}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Users List -->
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Role</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+                <tr>
+                    <td>{{ user.user_id }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.role }}</td>
+                    <td>
+                        <!-- Assign Role Form -->
+                        <form action="{{ url_for('admin.user_management') }}" method="POST" style="display:inline;">
+                            <input type="hidden" name="action" value="assign_role">
+                            <input type="hidden" name="user_id" value="{{ user.user_id }}">
+                            <select name="new_role" class="form-select-sm" required>
+                                <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
+                                <option value="patient" {% if user.role == 'patient' %}selected{% endif %}>Patient</option>
+                                <option value="coach" {% if user.role == 'coach' %}selected{% endif %}>Coach</option>
+                            </select>
+                            <button type="submit" class="btn btn-info btn-sm">Assign Role</button>
+                        </form>
+
+                        <!-- Delete User Form -->
+                        <form action="{{ url_for('admin.user_management') }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this user?');">
+                            <input type="hidden" name="action" value="delete_user">
+                            <input type="hidden" name="user_id" value="{{ user.user_id }}">
+                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-secondary mt-4">Back to Dashboard</a>
+</div>
+</body>
+</html>

@@ -157,86 +157,111 @@
 </div>
 
 <script>
-    let selectedRecipientId = null;
+let selectedRecipientId = null; // Tracks the currently selected recipient
+let selectedRecipientName = null;
 
-    // Set userId from session in JavaScript
-    const userId = "{{ session['user_id'] }}";
+// Set userId from session in JavaScript
+const userId = {{ session['user_id'] }};
 
-    // Load the list of users who messaged the patient
-    function loadContacts() {
-        fetch('/patient/messages?action=get_senders')
-            .then(response => response.json())
-            .then(data => {
-                const contactList = document.getElementById('contactList');
-                contactList.innerHTML = '';
+// Load the list of users who messaged the patient
+function loadContacts() {
+    fetch('/patient/messages?action=get_senders')
+        .then(response => response.json())
+        .then(data => {
+            const contactList = document.getElementById('contactList');
+            contactList.innerHTML = '';
 
-                data.forEach(contact => {
-                    const contactDiv = document.createElement('div');
-                    contactDiv.className = 'contact-item';
-                    contactDiv.textContent = contact.username;
-                    contactDiv.onclick = () => {
+            data.forEach(contact => {
+                const contactDiv = document.createElement('div');
+                contactDiv.className = 'contact-item';
+                contactDiv.textContent = contact.username;
+                contactDiv.onclick = () => {
+                    if (selectedRecipientId !== contact.sender_id) {
+                        // Update selectedRecipientId and recipientName
                         selectedRecipientId = contact.sender_id;
+                        selectedRecipientName = contact.username;
+
+                        // Update the chat header
+                        document.getElementById('recipientName').textContent = selectedRecipientName;
+
+                        // Load messages for the new recipient
                         loadMessages();
-                    };
-                    contactList.appendChild(contactDiv);
-                });
-            })
-            .catch(error => console.error('Error loading contacts:', error));
-    }
-
-    // Load messages for the selected recipient
-    function loadMessages() {
-        if (!selectedRecipientId) return;
-
-        fetch(`/patient/messages?action=fetch&recipient_id=${selectedRecipientId}`)
-            .then(response => response.json())
-            .then(data => {
-                const messageHistory = document.getElementById('messageHistory');
-                messageHistory.innerHTML = '';
-
-                data.forEach(message => {
-                    const messageDiv = document.createElement('div');
-                    messageDiv.className = 'message ' + (message.sender_id == userId ? 'sent' : 'received');
-                    messageDiv.innerHTML = `<p>${message.content}</p><span class="timestamp">${message.timestamp}</span>`;
-                    messageHistory.appendChild(messageDiv);
-                });
-
-                // Scroll to the bottom to show the latest messages
-                messageHistory.scrollTop = messageHistory.scrollHeight;
-            })
-            .catch(error => console.error('Error loading messages:', error));
-    }
-
-    // Send a message to the selected recipient
-    function sendMessage() {
-        const content = document.getElementById('messageContent').value;
-
-        if (!content.trim() || !selectedRecipientId) {
-            alert("Select a contact and type a message to send.");
-            return;
-        }
-
-        fetch(`/patient/messages?action=send`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ content: content, recipient_id: selectedRecipientId })
+                    }
+                };
+                contactList.appendChild(contactDiv);
+            });
         })
+        .catch(error => console.error('Error loading contacts:', error));
+}
+
+// Load messages for the selected recipient
+function loadMessages() {
+    if (!selectedRecipientId) {
+        console.error("No recipient selected!");
+        return;
+    }
+
+    // Fetch messages with cache-busting to ensure fresh data
+    fetch(`/patient/messages?action=fetch&recipient_id=${selectedRecipientId}&timestamp=${new Date().getTime()}`)
+        .then(response => response.json())
+        .then(data => {
+            const messageHistory = document.getElementById('messageHistory');
+            messageHistory.innerHTML = ''; // Clear previous messages
+
+            data.forEach(message => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message ' + (message.sender_id == userId ? 'sent' : 'received');
+                messageDiv.innerHTML = `<p>${message.content}</p><span class="timestamp">${message.timestamp}</span>`;
+                messageHistory.appendChild(messageDiv);
+            });
+
+            // Scroll to the bottom to show the latest messages
+            messageHistory.scrollTop = messageHistory.scrollHeight;
+        })
+        .catch(error => console.error('Error loading messages:', error));
+}
+
+// Send a message to the selected recipient
+function sendMessage() {
+    const content = document.getElementById('messageContent').value;
+
+    if (!content.trim() || !selectedRecipientId) {
+        alert("Select a contact and type a message to send.");
+        return;
+    }
+
+    fetch(`/patient/messages?action=send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: content, recipient_id: selectedRecipientId })
+    })
         .then(response => response.json())
         .then(data => {
             if (data.message) {
-                document.getElementById('messageContent').value = '';  // Clear input
-                loadMessages();  // Refresh messages after sending
+                // Add the sent message immediately to the chat
+                const messageHistory = document.getElementById('messageHistory');
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message sent';
+                messageDiv.innerHTML = `<p>${content}</p><span class="timestamp">${new Date().toLocaleString()}</span>`;
+                messageHistory.appendChild(messageDiv);
+
+                // Scroll to the bottom to show the latest messages
+                messageHistory.scrollTop = messageHistory.scrollHeight;
+
+                // Clear the input field
+                document.getElementById('messageContent').value = '';
             } else if (data.error) {
                 alert(data.error);
             }
         })
         .catch(error => console.error('Error sending message:', error));
-    }
+}
 
-    // Initial load of contacts and message history
-    document.addEventListener("DOMContentLoaded", () => {
-        loadContacts();
-    });
+// Initial load of contacts and message history
+document.addEventListener("DOMContentLoaded", () => {
+    loadContacts();
+});
+
 </script>
 
 </body>
