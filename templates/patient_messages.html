@@ -32,8 +32,22 @@
             flex-direction: column;
             background-color: #e9ecef;
         }
-    
-        
+        .chat-header {
+            padding: 15px;
+            border-bottom: 1px solid #ddd;
+            background-color: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .chat-header h3 {
+            font-size: 18px;
+            color: #333;
+        }
+        .chat-header .status {
+            font-size: 14px;
+            color: #888;
+        }
 
         .message-history {
             flex: 1;
@@ -141,8 +155,11 @@
     </div>
 
     <!-- Chat Area -->
-    <div class="chat-area">    
-
+    <div class="chat-area">
+        <div class="chat-header">
+            <h3>Chat with <span id="recipientName">[Recipient]</span></h3>
+            <span class="status">Online</span>
+        </div>
         <!-- Message History Container -->
         <div class="message-history" id="messageHistory">
             <!-- Messages will be dynamically loaded here -->
