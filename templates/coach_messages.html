@@ -60,7 +60,7 @@
         }
         .sent {
             align-self: flex-end;
-            background-color: #007bff;
+            background-color: #FFA500;
             color: white;
             border-top-right-radius: 0;
         }
@@ -100,7 +100,7 @@
             padding: 10px 20px;
             font-size: 14px;
             border: none;
-            background-color: #007bff;
+            background-color: #FFA500;
             color: white;
             border-radius: 15px;
             cursor: pointer;
@@ -115,7 +115,7 @@
             padding: 10px;
             font-size: 14px;
             text-align: center;
-            background-color: #007bff;
+            background-color: #FFA500;
             color: white;
             border-radius: 10px;
             text-decoration: none;
@@ -134,10 +134,10 @@
         <h2>Patients in Your Classes</h2>
         {% if patients %}
             {% for patient in patients %}
-                <div class="patient-item" onclick="loadMessages({{ patient.patient_id }})">
+                <button class="patient-item" onclick="loadMessages('{{ patient.patient_id }}')" onkeypress="loadMessages('{{ patient.patient_id }}')" tabindex="0">
                     <p><strong>{{ patient.name }}</strong></p>
                     <p>{{ patient.email }}</p>
-                </div>
+                </button>
             {% endfor %}
         {% else %}
             <p>No patients found.</p>
@@ -162,7 +162,7 @@
 
 <script>
     let selectedPatientId = null;
-    const userId = {{ session['user_id'] }};
+    const userId = "{{ session['user_id'] }}";
 
     // Function to load messages for a selected patient
     function loadMessages(patientId) {
