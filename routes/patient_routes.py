@@ -8,6 +8,17 @@ from routes.admin_classes_routes import manage_notification
 # Create the Blueprint for patient-related routes
 patient_bp = Blueprint('patient', __name__, url_prefix='/patient')
 
+
+# Function to connect to the cloud database
+def connect_to_db():
+    return mysql.connector.connect(
+        host="parkinson-db.cpkow24yk7fq.us-east-2.rds.amazonaws.com",
+        user="admin",
+        password="StudentFall2024!",
+        database="parkinson-db"
+    )
+
+
 # Patient Dashboard
 @patient_bp.route('/dashboard')
 def patient_dashboard():
@@ -112,21 +123,50 @@ def edit_profile():
 
 
 # View Patient Appointments
-@patient_bp.route('/appointments')
+@patient_bp.route('/view_appointments', methods=['GET'])
 def view_appointments():
-    """Display the list of appointments for the patient."""
-    if 'role' not in session or session['role'] != 'patient':
-        return redirect(url_for('auth.login'))  # Redirect to login if not authenticated as patient
-
+    # Retrieve user_id from the session
     user_id = session.get('user_id')
+    if not user_id:
+        print("Redirecting to login. User ID is not in the session.")
+        return redirect(url_for('auth.login'))
 
-    # Retrieve the patient's appointments
-    cur = mysql.connection.cursor(pymysql.cursors.DictCursor)
-    cur.execute("SELECT * FROM appointments WHERE patient_id = %s ORDER BY appointment_date ASC", (user_id,))
-    appointments = cur.fetchall()
-    cur.close()
+    # Connect to the database
+    db = mysql.connection
+    cursor = db.cursor(MySQLdb.cursors.DictCursor)  # Correct way to use DictCursor
 
-    return render_template('appointments.html', appointments=appointments)
+    # Fetch patient_id using user_id
+    cursor.execute("SELECT patient_id FROM patients WHERE user_id = %s", (user_id,))
+    patient = cursor.fetchone()
+    if not patient:
+        print("No patient found for this user. Redirecting to login.")
+        return redirect(url_for('auth.login'))
+    
+    patient_id = patient['patient_id']
+
+    # Query to fetch all classes the patient is registered for
+    query = '''
+        SELECT c.class_name, c.description, c.level, c.duration, c.start_time, c.capacity
+        FROM patient_classes pc
+        JOIN classes c ON pc.class_id = c.class_id
+        WHERE pc.patient_id = %s
+        ORDER BY c.start_time
+    '''
+    cursor.execute(query, (patient_id,))
+    classes = cursor.fetchall()
+    cursor.close()
+
+    # Render the appointments page
+    if not classes:
+        return render_template('patient_view_appointments.html', classes=None)
+    return render_template('patient_view_appointments.html', classes=classes)
+
+
+
+
+
+
+
 
 # View Available Classes
 @patient_bp.route('/view_classes', methods=['GET'])
