@@ -1,4 +1,5 @@
 import pymysql
+import MySQLdb.cursors
 pymysql.install_as_MySQLdb()
 from flask import Flask, redirect, url_for
 from flask_mysqldb import MySQL
