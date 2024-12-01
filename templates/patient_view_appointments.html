@@ -5,12 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>View Appointments</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/index.global.min.css" rel="stylesheet">
 </head>
 <body>
     <div class="container mt-5">
         <h1 class="text-center">Your Upcoming Appointments</h1>
 
         {% if classes %}
+            <!-- Calendar View -->
+            <div id="calendar" class="mt-4"></div>
+
+            <!-- Table View -->
             <table class="table table-striped mt-4">
                 <thead>
                     <tr>
@@ -47,6 +52,36 @@
         </div>
     </div>
 
+    <!-- FullCalendar and Bootstrap Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/index.global.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var calendarEl = document.getElementById('calendar');
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                events: [
+                    {% for class in classes %}
+                    {
+                        title: "{{ class['class_name'] }}",
+                        start: "{{ class['start_time'] }}", // Ensure start_time is ISO 8601 (YYYY-MM-DDTHH:mm:ss)
+                        description: "{{ class['description'] }}",
+                        duration: "{{ class['duration'] }} mins",
+                        level: "Level {{ class['level'] }}"
+                    },
+                    {% endfor %}
+                ],
+                eventContent: function (arg) {
+                    let title = arg.event.title;
+                    let description = arg.event.extendedProps.description;
+                    let duration = arg.event.extendedProps.duration;
+                    let level = arg.event.extendedProps.level;
+
+                    return { html: `<b>${title}</b><br>${description}<br>${duration}<br>${level}` };
+                }
+            });
+            calendar.render();
+        });
+    </script>
 </body>
 </html>
