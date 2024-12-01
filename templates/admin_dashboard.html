@@ -140,6 +140,18 @@
         <h1>Admin Dashboard</h1>
     </div>
 
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div>
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+
     <!-- Top Row Cards -->
     <div class="row">
         <div class="col-md-3 mb-4">
@@ -216,7 +228,7 @@
                         <input type="hidden" name="user_id" value="{{ user.user_id }}">
                         <select name="new_role" required>
                             <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
-                            <option value="patient" {% if user.role == 'patient' %}selected{% endif %}>Patient</option>
+                            <option value="patient" {% if user.role == 'patient' %}selected{% endif %}>Member</option>
                             <option value="coach" {% if user.role == 'coach' %}selected{% endif %}>Coach</option>
                         </select>
                         <button type="submit" class="btn btn-info btn-sm">Assign Role</button>

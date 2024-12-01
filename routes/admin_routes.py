@@ -117,12 +117,12 @@ def admin_dashboard():
                             cur.execute("INSERT INTO patients (user_id, username) VALUES (%s, %s)", (user_id, username))
                             flash("Patient role assigned successfully!", "success")
                         else:
-                            flash("This user is already a patient.", "info")
+                            flash("This user is already a member.", "info")
 
                         # Update the role in the `users` table
                         cur.execute("UPDATE users SET role = %s WHERE user_id = %s", ('patient', user_id))
                         mysql.connection.commit()  # Commit all changes
-                        flash("User role updated to patient in users table.", "success")
+
                     except Exception as e:
                         mysql.connection.rollback()  # Rollback if any error occurs
                         flash("An error occurred while updating the user role.", "danger")
@@ -138,10 +138,10 @@ def admin_dashboard():
                         try:
                             cur.execute("DELETE FROM patients WHERE user_id = %s", (user_id,))
                             mysql.connection.commit()
-                            flash("User removed from patient role.", "info")
+                            flash("User removed from member role.", "info")
                         except Exception as e:
                             mysql.connection.rollback()
-                            flash("An error occurred while removing the patient role.", "danger")
+                            flash("An error occurred while removing the member role.", "danger")
                             print("Error:", e)
                             return redirect(url_for('admin.manage_classes'))
 
@@ -169,7 +169,7 @@ def admin_dashboard():
                     try:
                         cur.execute("UPDATE users SET role = %s WHERE user_id = %s", ('coach', user_id))
                         mysql.connection.commit()  # Commit the transaction
-                        flash("User role updated to coach in users table.", "success")
+
                     except Exception as e:
                         mysql.connection.rollback()  # Rollback in case of error
                         flash("An error occurred while updating the user role.", "danger")
@@ -284,10 +284,10 @@ def edit_patient_profile(user_id):
             """, (first_name, dob, gender, phone, address, medical_history, user_id))
 
             mysql.connection.commit()
-            flash("Patient profile updated successfully!", "success")
+            flash("Member profile updated successfully!", "success")
         except Exception as e:
             mysql.connection.rollback()
-            flash("An error occurred while updating the patient profile.", "danger")
+            flash("An error occurred while updating the member profile.", "danger")
             print(e)
 
     # Fetch updated patient information for rendering
@@ -303,7 +303,7 @@ def edit_patient_profile(user_id):
     cur.close()
 
     if not patient:
-        flash("Patient not found.", "danger")
+        flash("Member not found.", "danger")
         return redirect(url_for('admin.admin_patients_list'))
 
     return render_template('admin_patient_profile.html', patient=patient)
@@ -421,7 +421,7 @@ def edit_coach_profile(user_id):
     cur.close()
 
     if not coach:
-        flash("Patient not found.", "danger")
+        flash("Member not found.", "danger")
         return redirect(url_for('admin.admin_coach_list'))
 
     return render_template('admin_coach_profile.html', coach=coach)
