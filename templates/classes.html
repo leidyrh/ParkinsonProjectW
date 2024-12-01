@@ -169,9 +169,9 @@
                     <h6>Registered Patients</h6>
                     <ul>
                         {% for patient in class_registrations[class.class_id] %}
-                            <li>
+                            <li class="mt-3">
                                 {{ patient.first_name }} {{ patient.last_name }}
-                                <form action="{{ url_for('admin_classes.manage_classes') }}" method="POST" style="display:inline;">
+                                <form class="mx-2 mb=1" action="{{ url_for('admin_classes.manage_classes') }}" method="POST" style="display:inline;">
                                     <input type="hidden" name="patient_id" value="{{ patient.patient_id }}">
                                     <input type="hidden" name="class_id" value="{{ class.class_id }}">
                                     <input type="hidden" name="delete_patient" value="true">

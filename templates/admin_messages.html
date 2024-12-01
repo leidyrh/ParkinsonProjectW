@@ -14,8 +14,10 @@
             background-color: #f4f4f9;
         }
         .sidebar {
-            width: 30%;
+            width: 20%;
             padding: 20px;
+            display: flex;
+            flex-direction: column;
             overflow-y: auto;
             border-right: 1px solid #ddd;
             background-color: #fff;
@@ -38,6 +40,7 @@ patient-item {
 }
 .patient-button {
     background-color: #e8e6e6; /* Grey color */
+    margin-bottom: 20px;
 }
 
 .patient-item p {
@@ -148,7 +151,7 @@ patient-item {
         <h2>Member List</h2>
         {% if patients %}
             {% for patient in patients %}
-                <button class="patient-button patient-item" onclick="loadMessages('{{ patient.user_id }}')" onkeypress="if(event.key === 'Enter') loadMessages('{{ patient.user_id }}')" tabindex="0">
+                <button class="patient-button patient-item mb-1" onclick="loadMessages('{{ patient.user_id }}')" onkeypress="if(event.key === 'Enter') loadMessages('{{ patient.user_id }}')" tabindex="0">
                     <p><strong>{{ patient.first_name }}</strong></p>
                     <p>{{ patient.email }}</p>
                 </button>
