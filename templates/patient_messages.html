@@ -178,7 +178,7 @@ let selectedRecipientId = null; // Tracks the currently selected recipient
 let selectedRecipientName = null;
 
 // Set userId from session in JavaScript
-const userId = {{ session['user_id'] }};
+const userId = "{{ session['user_id'] }}";
 
 // Load the list of users who messaged the patient
 function loadContacts() {
