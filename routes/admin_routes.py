@@ -77,7 +77,7 @@ def admin_dashboard():
                             (user_id, username, hashed_pw.decode('utf-8'), email))
                 mysql.connection.commit()
 
-                flash('New patient created successfully!', 'success')
+                flash('New user created successfully!', 'success')
 
             elif action == 'assign_role':
                 # Assign a new role to an existing user
@@ -111,13 +111,17 @@ def admin_dashboard():
                             cur.execute("DELETE FROM coach WHERE coach_id = %s", (user_id,))
                             flash("User removed from coach role.", "info")
 
+                        # Check if the username already exists in the patients table
+                        cur.execute("SELECT * FROM patients WHERE username = %s", (username,))
+                        existing_patient = cur.fetchone()
+
                         # Insert into patients table if not already a patient
-                        cur.execute("SELECT * FROM patients WHERE user_id = %s", (user_id,))
-                        if not cur.fetchone():
+                        if existing_patient:
+                            flash("This user is already a patient.", "info")
+                        else:
+                            # Insert into the patients table
                             cur.execute("INSERT INTO patients (user_id, username) VALUES (%s, %s)", (user_id, username))
                             flash("Patient role assigned successfully!", "success")
-                        else:
-                            flash("This user is already a member.", "info")
 
                         # Update the role in the `users` table
                         cur.execute("UPDATE users SET role = %s WHERE user_id = %s", ('patient', user_id))
@@ -184,11 +188,26 @@ def admin_dashboard():
             elif action == 'delete_user':
                 # Delete user by ID
                 user_id = request.form['user_id']
-                cur = mysql.connection.cursor()
-                cur.execute("DELETE FROM users WHERE user_id = %s", (user_id,))
-                mysql.connection.commit()
+                try:
+                    cur = mysql.connection.cursor()
 
-                flash('User deleted successfully!', 'success')
+                    # Find the corresponding patient_id in the `patients` table, if any
+                    cur.execute("SELECT patient_id FROM patients WHERE user_id = %s", (user_id,))
+                    patient = cur.fetchone()
+
+                    if patient:
+                        patient_id = patient['patient_id']
+                        # Delete the record from the `patients` table
+                        cur.execute("DELETE FROM patients WHERE patient_id = %s", (patient_id,))
+
+                    cur.execute("DELETE FROM users WHERE user_id = %s", (user_id,))
+                    mysql.connection.commit()
+                    flash('User deleted successfully!', 'success')
+
+                except Exception as e:
+                    mysql.connection.rollback()  # Rollback in case of an error
+                    flash("An error occurred while deleting the user.", "danger")
+                    print(f"Error while deleting user: {e}")
 
             # Re-fetch the updated list of users after the action
             cur.execute("SELECT user_id, username, role FROM users")

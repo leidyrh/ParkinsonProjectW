@@ -13,6 +13,10 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav">
                  <li class="nav-item active">
+                     <!-- Dashboard Button -->
+                     <a href="{{ url_for('patient.patient_dashboard') }}" class="btn btn-outline-secondary mx-2">Dashboard</a>
+                 </li>
+                 <li class="nav-item active">
                      <!-- View Classes Button -->
                      <a href="{{ url_for('patient.view_classes') }}" class="btn btn-outline-secondary mx-2">View Classes</a>
                  </li>
@@ -56,7 +60,7 @@
         </nav>
 
     <div class="container mt-5">
-        <h1 class="text-center">Welcome, {{ patient.first_name }}</h1>
+        <h1 class="text-center">Welcome, {{ patient.first_name }}</h1> <hr> <br>
 
         <!-- Patient Information Card -->
         <div class="card">
