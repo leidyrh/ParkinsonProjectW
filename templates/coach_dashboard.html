@@ -6,107 +6,181 @@
     <title>Coach Dashboard</title>
     <link rel="icon" href="{{ url_for('static', filename='logo.ico') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #ffffff;
+            display: flex;
+            height: 100vh; /* Ensure full height */
+            margin: 0;
+        }
+
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            background-color: #f8f9fa;
+            color: #343a40;
+            position: fixed;
+            top: 0;
+            left: 0;
+            padding: 15px 0;
+            border-right: 1px solid #dee2e6;
+            z-index: 1; /* Ensure sidebar stays on top */
+        }
+
+        .sidebar .nav-link {
+            color: #343a40;
+            margin: 10px 0;
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: block;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .sidebar .nav-link:hover {
+            background-color: #f1e5de;
+            color: #151313;
+        }
+
+        .dashboard-content {
+            margin-left: 250px; /* Make space for sidebar */
+            padding: 30px;
+            flex-grow: 1;
+            overflow-x: hidden; /* Prevent horizontal overflow */
+        }
+
+        .header {
+            background-color: #ffffff;
+            border-bottom: 1px solid #dee2e6;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header img {
+            height: 50px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #78818e;
+        }
+    </style>
 </head>
 <body>
 
-<div class="container mt-5">
-    <!-- Logo -->
-    <div class="text-center mb-4">
-        <img src="{{ url_for('static', filename='KatzJCCLogo.png') }}" alt="Katz JCC Logo" style="max-width: 200px;">
+<div class="container-fluid">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <!-- Logo Section: Displays the KatzJCC logo at the top -->
+        <div class="text-center mb-5">
+            <img src="{{ url_for('static', filename='KatzJCCLogo.png') }}" alt="Logo" style="height: 40px;">
+        </div>
+
+        <!-- Navigation Links -->
+        <nav>
+            <a href="#" class="nav-link">Dashboard</a>
+            
+            <a href="{{ url_for('coach.manage_messages') }}" class="nav-link">Messages</a>
+            <a href="{{ url_for('auth.logout') }}" class="nav-link">Logout</a>
+        </nav>
     </div>
 
-    <h1 class="mb-4">Welcome, {{ coach.first_name }}</h1>
+    <!-- Dashboard content -->
+    <div class="dashboard-content">
+        <!-- Main content -->
+        <div class="text-center mb-5">
+            <img src="{{ url_for('static', filename='KatzJCCLogo.png') }}" alt="Katz JCC Logo" style="max-width: 200px;">
+        </div>
 
-    <!-- Flash Messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="alert alert-{{ messages[0][0] }}">
-                {{ messages[0][1] }}
-            </div>
-        {% endif %}
-    {% endwith %}
+        <h1 class="mb-5">Welcome, {{ coach.first_name }}</h1>
 
-    <!-- Your Classes -->
-    <div class="mb-4">
-        <h2>Your Classes</h2>
-        {% if classes %}
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Class Name</th>
-                        <th>Start Time</th>
-                        <th>Duration</th>
-                        <th>Capacity</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for class in classes %}
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="alert alert-{{ messages[0][0] }}">
+                    {{ messages[0][1] }}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Your Classes -->
+        <div class="mb-4">
+            <h2>Your Classes</h2>
+            {% if classes %}
+                <table class="table table-striped">
+                    <thead>
                         <tr>
-                            <td>{{ class.class_name }}</td>
-                            <td>{{ class.start_time }}</td>
-                            <td>{{ class.duration }}</td>
-                            <td>{{ class.capacity }}</td>
-                            <td>
-                                <a href="{{ url_for('coach.view_class_patients', class_id=class.class_id) }}" class="btn btn-info btn-sm">
-                                    View Patients
-                                </a>
-                            </td>
+                            <th>Class Name</th>
+                            <th>Start Time</th>
+                            <th>Duration</th>
+                            <th>Capacity</th>
+                            <th>Actions</th>
                         </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            <p>No classes assigned to you yet.</p>
-        {% endif %}
-    </div>
-    <!-- Patients Section -->
-    <div class="mb-4">
-        <h2>Patients in Your Classes</h2>
-        {% if patients %}
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Patient First Name</th>
-                        <th>Patient Last Name</th>
-                        <th>Email</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for patient in patients %}
+                    </thead>
+                    <tbody>
+                        {% for class in classes %}
+                            <tr>
+                                <td>{{ class.class_name }}</td>
+                                <td>{{ class.start_time }}</td>
+                                <td>{{ class.duration }}</td>
+                                <td>{{ class.capacity }}</td>
+                                <td>
+                                    <a href="{{ url_for('coach.view_class_patients', class_id=class.class_id) }}" class="btn btn-info btn-sm">
+                                        View members
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No classes assigned to you yet.</p>
+            {% endif %}
+        </div>
+
+        <!-- Patients Section -->
+        <div class="mb-4">
+            <h2>Members in Your Classes</h2>
+            {% if patients %}
+                <table class="table table-striped">
+                    <thead>
                         <tr>
-                            <td>{{ patient.firs_name }}</td>
-                            <td>{{ patient.Last_name }}</td>
-                            <td>{{ patient.email }}</td>
-                            <td>
-                                <a href="{{ url_for('coach.create_assessment', patient_id=patient.patient_id) }}"
-                                   class="btn btn-primary btn-sm">
-                                    Create Assessment
-                                </a>
-                            </td>
-                            <td>
-                            <a href="{{ url_for('coach.view_patient_assessments', patient_id=patient.patient_id) }}"
-                               class="btn btn-info btn-sm">View Assessments</a>
-                            </td>
-
+                            <th>Member First Name</th>
+                            <th>Memebr Last Name</th>
+                            <th>Email</th>
+                            <th>Actions</th>
                         </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            <p>No patients are currently registered in your classes.</p>
-        {% endif %}
-    </div>
-    <!-- Messages Button -->
-    <div class="text-center mb-4">
-        <a href="{{ url_for('coach.manage_messages') }}" class="btn btn-info btn-lg">Messages</a>
-    </div>
+                    </thead>
+                    <tbody>
+                        {% for patient in patients %}
+                            <tr>
+                                <td>{{ patient.firs_name }}</td>
+                                <td>{{ patient.Last_name }}</td>
+                                <td>{{ patient.email }}</td>
+                                <td>
+                                    <a href="{{ url_for('coach.create_assessment', patient_id=patient.patient_id) }}"
+                                       class="btn btn-primary btn-sm">
+                                        Create Assessment
+                                    </a>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('coach.view_patient_assessments', patient_id=patient.patient_id) }}"
+                                       class="btn btn-info btn-sm">View Assessments</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No patients are currently registered in your classes.</p>
+            {% endif %}
+        </div>
 
-    <!-- Logout Button -->
-    <a href="{{ url_for('coach.logout') }}" class="btn btn-secondary">Logout</a>
-</div>
-
+       
 
 </body>
 </html>
