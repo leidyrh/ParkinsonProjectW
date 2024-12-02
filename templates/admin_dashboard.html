@@ -161,7 +161,7 @@
                     <div class="icon">&#128101;</div>
                     <h5>Members</h5>
                     <p class="count">{{ patient_count }}</p>
-                    <a href="{{ url_for('admin.list_patients') }}" class="btn btn-primary btn-sm">Patients</a>
+                    <a href="{{ url_for('admin.list_patients') }}" class="btn btn-primary btn-sm">Members</a>
                 </div>
             </div>
         </div>
@@ -214,7 +214,7 @@
         <thead>
             <tr>
                 <th>Username</th>
-                <th>Role</th>
+
                 <th>Actions</th>
             </tr>
         </thead>
@@ -222,7 +222,7 @@
             {% for user in users %}
             <tr>
                 <td>{{ user.username }}</td>
-                <td>{{ user.role }}</td>
+
                 <td class="table-actions">
                     <form action="{{ url_for('admin.admin_dashboard') }}" method="POST" style="display:inline;">
                         <input type="hidden" name="action" value="assign_role">

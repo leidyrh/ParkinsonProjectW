@@ -77,7 +77,7 @@ def admin_dashboard():
                             (user_id, username, hashed_pw.decode('utf-8'), email))
                 mysql.connection.commit()
 
-                flash('New patient created successfully!', 'success')
+                flash('New user created successfully!', 'success')
 
             elif action == 'assign_role':
                 # Assign a new role to an existing user
