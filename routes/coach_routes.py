@@ -140,7 +140,7 @@ def view_class_patients(class_id):
     )
     patients = cur.fetchall()
     cur.close()
-    return render_template('coach_dashboard.html', coach=coach, classes=classes, patients=patients, class_info=assigned_class)
+    return render_template('coach_view_class_patients.html', coach=coach, classes=classes, patients=patients, class_info=assigned_class)
 
 
 @coach_bp.route('/manage_messages', methods=['GET', 'POST'])
