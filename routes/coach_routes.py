@@ -106,8 +106,18 @@ def view_class_patients(class_id):
 
     coach_id = session.get('user_id')
 
-    # Verify if the class belongs to this coach
+    # Get the coach's information from the database
     cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM coach WHERE coach_id = %s", (coach_id,))
+    coach = cur.fetchone()
+
+    # Fetch classes assigned to the coach
+    cur.execute(
+        "SELECT * FROM classes WHERE coach_id = %s",
+        (coach_id,))
+    classes = cur.fetchall()
+
+    # Verify if the class belongs to this coach
     cur.execute(
         "SELECT * FROM classes WHERE class_id = %s AND coach_id = %s",
         (class_id, coach_id)
@@ -130,8 +140,7 @@ def view_class_patients(class_id):
     )
     patients = cur.fetchall()
     cur.close()
-
-    return render_template('coach_view_class_patients.html', class_info=assigned_class, patients=patients)
+    return render_template('coach_view_class_patients.html', coach=coach, classes=classes, patients=patients, class_info=assigned_class)
 
 
 @coach_bp.route('/manage_messages', methods=['GET', 'POST'])
@@ -276,7 +285,7 @@ def view_patient_assessments(patient_id):
 
         if not assessment_id or not assessment_name or not assessment_data:
             flash("All fields are required to update the assessment.", "warning")
-            return redirect(url_for('coach.view_patient_assessments', patient_id=patient_id, assessment_id=assessment_id))
+            return redirect(url_for('_patient_assessments', patient_id=patient_id, assessment_id=assessment_id))
 
         try:
             cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)

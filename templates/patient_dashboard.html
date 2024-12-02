@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patient Dashboard</title>
+    <link rel="icon" href="{{ url_for('static', filename='logo.ico') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css">
 </head>
 <body>
@@ -11,6 +12,10 @@
             <span class="navbar-brand mb-0 h1">Parkinson's Connection</span>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav">
+                 <li class="nav-item active">
+                     <!-- Dashboard Button -->
+                     <a href="{{ url_for('patient.patient_dashboard') }}" class="btn btn-outline-secondary mx-2">Dashboard</a>
+                 </li>
                  <li class="nav-item active">
                      <!-- View Classes Button -->
                      <a href="{{ url_for('patient.view_classes') }}" class="btn btn-outline-secondary mx-2">View Classes</a>
@@ -55,7 +60,7 @@
         </nav>
 
     <div class="container mt-5">
-        <h1 class="text-center">Welcome, {{ patient.first_name }}</h1>
+        <h1 class="text-center">Welcome, {{ patient.first_name }}</h1> <hr> <br>
 
         <!-- Patient Information Card -->
         <div class="card">

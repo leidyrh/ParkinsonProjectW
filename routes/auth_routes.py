@@ -71,17 +71,21 @@ def register():
         username = request.form['username']
         email = request.form['email']
         password = request.form['password']
+        # Hash the password before storing it
+        hashed_pw = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
         # Check if the username already exists in the database
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cur.execute("SELECT * FROM users WHERE username = %s", (username,))
         existing_user = cur.fetchone()
 
-        if existing_user:
-            flash('Username already exists. Please choose another one.', 'danger')
+        # Check if the username already exists in the `patients` table
+        cur.execute("SELECT * FROM patients WHERE username = %s", (username,))
+        user_in_patients = cur.fetchone()
+
+        if existing_user or user_in_patients:
+            flash("Username is already taken. Please choose a different one.", "danger")
             return redirect(url_for('auth.register'))
-        #Hash the password before storing it
-        hashed_pw = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
         # Check if there is an admin in the database
         cur.execute("SELECT * FROM users WHERE role = 'admin'")
@@ -108,25 +112,21 @@ def register():
                 "danger")
             return redirect(url_for('auth.register'))
 
-        # Insert user into the database
-        #cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        # Insert user into the user table
         cur.execute("INSERT INTO users (username, password, email, role) VALUES (%s, %s, %s, %s)",
                         (username, hashed_pw.decode('utf-8'), email, role))  # Role 'patient' by default for simplicity
         # Get the user_id of the newly created user
         user_id = cur.lastrowid
-        mysql.connection.commit()
+
         # After inserting into the users table, also insert into the patients table
         cur.execute("INSERT INTO patients (user_id,username, password, email) VALUES (%s, %s, %s,%s)",
                         (user_id,username, hashed_pw.decode('utf-8'), email))
 
         mysql.connection.commit()
         cur.close()
-
         flash("Registration successful! Please log in.", "success")
         return redirect(url_for('auth.login'))
-
     return render_template('register.html')
-
 
 # Logout Route
 @auth_bp.route('/logout')

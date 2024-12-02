@@ -4,11 +4,62 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Track Symptoms</title>
+    <link rel="icon" href="{{ url_for('static', filename='logo.ico') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css">
 </head>
 <body>
+<nav class="navbar navbar-expand-sm navbar-light bg-light ps-4">
+            <span class="navbar-brand mb-0 h1">Parkinson's Connection</span>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                 <li class="nav-item active">
+                     <!-- Dashboard Button -->
+                     <a href="{{ url_for('patient.patient_dashboard') }}" class="btn btn-outline-secondary mx-2">Dashboard</a>
+                 </li>
+                 <li class="nav-item active">
+                     <!-- View Classes Button -->
+                     <a href="{{ url_for('patient.view_classes') }}" class="btn btn-outline-secondary mx-2">View Classes</a>
+                 </li>
+                 <li class="nav-item active">
+                     <!-- Messages Button -->
+                     <a href="{{ url_for('patient.manage_patient_messages') }}" class="btn btn-outline-secondary mx-2">Messages</a>
+                 </li>
+                 <li class="nav-item active">
+                     <!-- Track Symptoms -->
+                     <a href="{{ url_for('patient.track_symptoms') }}" class="btn btn-outline-secondary mx-2">Track Symptoms</a>
+                 </li>
+                 <li class="nav-item active">
+                     <a href="{{ url_for('patient.view_appointments') }}" class="btn btn-outline-secondary mx-2">View All Appointments</a>
+                 </li>
+                 <li class="nav-item active">
+                     <!-- Button to trigger the popup -->
+                     <button type="button" class="btn btn-outline-danger mx-2" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                         Logout
+                     </button>
+                     <!-- Modal (Popup) -->
+                     <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                         <div class="modal-dialog">
+                             <div class="modal-content">
+                                 <div class="modal-header">
+                                     <h5 class="modal-title" id="exampleModalLabel">Logout</h5>
+                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                 </div>
+                                 <div class="modal-body">
+                                     Are you sure you want to log out?
+                                 </div>
+                                 <div class="modal-footer">
+                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                                     <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger mx-2">Yes</a>
+                                 </div>
+                             </div>
+                         </div>
+                     </div>
+                 </li>
+                </ul>
+            </div>
+        </nav>
     <div class="container mt-5">
-        <h1 class="text-center">Track Your Symptoms</h1>
+        <h1 class="text-center">Track Your Symptoms</h1> <hr> <br>
         <form method="POST" action="{{ url_for('patient.track_symptoms') }}">
             <div class="mb-3">
                 <label for="symptom" class="form-label">Symptom:</label>
