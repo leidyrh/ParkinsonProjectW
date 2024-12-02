@@ -140,7 +140,7 @@
                         <td>{{ class.level }}</td>
                         <td>{{ class.description }}</td>
                         <td>{{ class.duration }} mins</td>
-                        <td>{{ class.start_time }}</td>
+                        <td>formatDateTime({{ class.start_time }})</td>
                         <td>{{ class.capacity }}</td>
                         <td>
                             {% if class.image_url %}
@@ -280,6 +280,42 @@
                     document.querySelector('input[name="edit_class"]').value = "1";
                     document.querySelector('input[name="class_id"]').value = classData.class_id;
                 }
+
+                function formatDateTime(datetime) {
+                // Create a Date object from the input string
+                const date = new Date(datetime);
+
+                // Define an array of month names
+                const months = [
+                    "January", "February", "March", "April", "May", "June",
+                    "July", "August", "September", "October", "November", "December"
+                ];
+
+                // Get components of the date
+                const month = months[date.getMonth()];
+                const day = date.getDate();
+                const year = date.getFullYear();
+
+                // Format the day with an ordinal suffix
+                const ordinalSuffix = (n) => {
+                    if (n >= 11 && n <= 13) return "th";
+                    const lastDigit = n % 10;
+                    if (lastDigit === 1) return "st";
+                    if (lastDigit === 2) return "nd";
+                    if (lastDigit === 3) return "rd";
+                    return "th";
+                };
+                const dayWithSuffix = `${day}${ordinalSuffix(day)}`;
+
+                // Get time in 12-hour format
+                let hours = date.getHours();
+                const minutes = date.getMinutes().toString().padStart(2, "0");
+                const ampm = hours >= 12 ? "pm" : "am";
+                hours = hours % 12 || 12; // Convert 0 (midnight) to 12
+
+                // Construct the final formatted string
+                return `${month} ${dayWithSuffix} at ${hours}:${minutes}${ampm}`;
+            }
             </script>
 </div>
 </body>
