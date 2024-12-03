@@ -450,4 +450,30 @@ def manage_patient_messages():
     # Handle sending messages when action is 'send'
     if request.method == 'POST' and action == 'send':
         data = request.get_json()
+        content = data.get('content')
+        recipient_id = data.get('recipient_id')  # Get recipient_id from the request data
+
+        if not content:
+            return jsonify({"error": "Message content cannot be empty"}), 400
+        if not recipient_id:
+            return jsonify({"error": "Recipient ID is required"}), 400
+
+        try:
+            cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+            cur.execute("""
+                        INSERT INTO messages (sender_id, recipient_id, content, timestamp)
+                        VALUES (%s, %s, %s, NOW())
+                    """, (patient_id, recipient_id, content))
+            mysql.connection.commit()
+            cur.close()
+
+            return jsonify({"message": "Message sent successfully"}), 201
+        except Exception as e:
+            print("Error sending message:", e)
+            return jsonify({"error": "Failed to send message"}), 500
+
+    return jsonify({"error": "Invalid action or method"}), 400
+
+
+
 
