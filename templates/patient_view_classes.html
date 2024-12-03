@@ -1,126 +1,134 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>View Classes</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css">
-    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/index.global.min.css" rel="stylesheet">
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>View Classes</title>
+   <link rel="icon" href="{{ url_for('static', filename='logo.ico') }}">
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css">
 </head>
 <body>
 <nav class="navbar navbar-expand-sm navbar-light bg-light ps-4">
-            <span class="navbar-brand mb-0 h1">Parkinson's Connection</span>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
-                    <li class="nav-item active">
-                     <!-- Dashboard Button -->
-                     <a href="{{ url_for('patient.patient_dashboard') }}" class="btn btn-outline-secondary mx-2">Dashboard</a>
-                 </li>
-                 <li class="nav-item active">
-                     <!-- View Classes Button -->
-                     <a href="{{ url_for('patient.view_classes') }}" class="btn btn-outline-secondary mx-2">View Classes</a>
-                 </li>
-                 <li class="nav-item active">
-                     <!-- Messages Button -->
-                     <a href="{{ url_for('patient.manage_patient_messages') }}" class="btn btn-outline-secondary mx-2">Messages</a>
-                 </li>
-                 <li class="nav-item active">
-                     <!-- Track Symptoms -->
-                     <a href="{{ url_for('patient.track_symptoms') }}" class="btn btn-outline-secondary mx-2">Track Symptoms</a>
-                 </li>
-                 <li class="nav-item active">
-                     <a href="{{ url_for('patient.view_appointments') }}" class="btn btn-outline-secondary mx-2">View All Appointments</a>
-                 </li>
-                 <li class="nav-item active">
-                     <!-- Button to trigger the popup -->
-                     <button type="button" class="btn btn-outline-danger mx-2" data-bs-toggle="modal" data-bs-target="#exampleModal">
-                         Logout
-                     </button>
-                     <!-- Modal (Popup) -->
-                     <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                         <div class="modal-dialog">
-                             <div class="modal-content">
-                                 <div class="modal-header">
-                                     <h5 class="modal-title" id="exampleModalLabel">Logout</h5>
-                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                 </div>
-                                 <div class="modal-body">
-                                     Are you sure you want to log out?
-                                 </div>
-                                 <div class="modal-footer">
-                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
-                                     <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger mx-2">Yes</a>
-                                 </div>
-                             </div>
-                         </div>
-                     </div>
-                 </li>
-                </ul>
-            </div>
-        </nav>
-    <div class="container mt-5">
-        <h1 class="text-center">Available Classes</h1>
+           <span class="navbar-brand mb-0 h1">Parkinson's Connection</span>
+           <div class="collapse navbar-collapse" id="navbarNav">
+               <ul class="navbar-nav">
+                   <li class="nav-item active">
+                    <!-- Dashboard Button -->
+                    <a href="{{ url_for('patient.patient_dashboard') }}" class="btn btn-outline-secondary mx-2">Dashboard</a>
+                </li>
+                <li class="nav-item active">
+                    <!-- View Classes Button -->
+                    <a href="{{ url_for('patient.view_classes') }}" class="btn btn-outline-secondary mx-2">View Classes</a>
+                </li>
+                <li class="nav-item active">
+                    <!-- Messages Button -->
+                    <a href="{{ url_for('patient.manage_patient_messages') }}" class="btn btn-outline-secondary mx-2">Messages</a>
+                </li>
+                <li class="nav-item active">
+                    <!-- Track Symptoms -->
+                    <a href="{{ url_for('patient.track_symptoms') }}" class="btn btn-outline-secondary mx-2">Track Symptoms</a>
+                </li>
+                <li class="nav-item active">
+                    <a href="{{ url_for('patient.view_appointments') }}" class="btn btn-outline-secondary mx-2">View All Appointments</a>
+                </li>
+                <li class="nav-item active">
+                    <!-- Button to trigger the popup -->
+                    <button type="button" class="btn btn-outline-danger mx-2" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                        Logout
+                    </button>
+                    <!-- Modal (Popup) -->
+                    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="exampleModalLabel">Logout</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    Are you sure you want to log out?
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                                    <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger mx-2">Yes</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+               </ul>
+           </div>
+       </nav>
+   <div class="container mt-5">
+       <h1 class="text-center">Available Classes</h1> <hr> <br>
 
-        {% if classes %}
-            <!-- Calendar View -->
-            <div id="calendar" class="mt-4"></div>
 
-            <!-- Table View -->
-            <table class="table table-striped mt-4">
-                <thead>
-                    <tr>
-                        <th>Class Name</th>
-                        <th>Description</th>
-                        <th>Level</th>
-                        <th>Duration</th>
-                        <th>Start Time</th>
-                        <th>Capacity</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for class in classes %}
-                        <tr>
-                            <td>{{ class['class_name'] }}</td>
-                            <td>{{ class['description'] }}</td>
-                            <td>{{ class['level'] }}</td>
-                            <td>{{ class['duration'] }} mins</td>
-                            <td>{{ class['start_time'] }}</td>
-                            <td>{{ class['capacity'] }}</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            <p class="text-muted text-center mt-4">You have not signed up for any classes yet.</p>
-            <div class="text-center mt-4">
-                <a href="{{ url_for('patient.view_classes') }}" class="btn btn-primary">View Classes</a>
-            </div>
-        {% endif %}
+       {% if classes %}
+       <table class="table table-striped">
+           <thead>
+               <tr>
+                   <th>Image</th> <!-- New column for the image -->
+                   <th>Class Name</th>
+                   <th class="col-4">Description</th> <!-- Widen the description column -->
+                   <th>Level</th>
+                   <th>Duration</th>
+                   <th>Start Time</th>
+                   <th>Capacity</th>
+                   <th>Status</th>
+                   <th>Action</th>
+               </tr>
+           </thead>
+           <tbody>
+               {% for class in classes %}
+                   <tr>
+                       <!-- Display the image -->
+                       <td>
+                           {% if class['image_url'] %}
+                               <img src="{{ class['image_url'] }}" alt="Class Image" style="width: 100px; height: auto;">
+                           {% else %}
+                               <em>No Image</em>
+                           {% endif %}
+                       </td>
+                       <td>{{ class['class_name'] }}</td>
+                       <td>{{ class['description'] }}</td>
+                       <td>{{ class['level'] }}</td>
+                       <td>{{ class['duration'] }} mins</td>
+                       <td>{{ class['start_time'] }}</td>
+                       <td>{{ class['capacity'] }}</td>
+                       <td>{{ class['status'] }}</td>
+                       <td>
+                           {% if class['booked'] %}
+                               <!-- Cancel Booking -->
+                               <form action="{{ url_for('patient.cancel_booking') }}" method="POST">
+                                   <input type="hidden" name="class_id" value="{{ class['class_id'] }}">
+                                   <button type="submit" class="btn btn-danger">Cancel Reservation</button>
+                               </form>
+                           {% elif class['capacity'] == 0 %}
+                               <!-- Class Full -->
+                               <button class="btn btn-secondary" disabled>Class Full</button>
+                           {% else %}
+                               <!-- Book Class -->
+                               <form action="{{ url_for('patient.book_class') }}" method="POST">
+                                   <input type="hidden" name="class_id" value="{{ class['class_id'] }}">
+                                   <button type="submit" class="btn btn-primary">Book</button>
+                               </form>
+                           {% endif %}
+                       </td>
+                   </tr>
+               {% endfor %}
+           </tbody>
+       </table>
+      
+       {% else %}
+           <p class="text-muted text-center">No classes available at the moment.</p>
+       {% endif %}
 
-        <div class="text-center mt-4">
-            <a href="{{ url_for('patient.patient_dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
-        </div>
-    </div>
 
-    <!-- FullCalendar and Bootstrap Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/index.global.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            var calendarEl = document.getElementById('calendar');
-            var calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
-                events: [
-                    {% for class in classes %}
-                    {
-                        title: "{{ class['class_name'] }}", // Only class name shown
-                        start: "{{ class['start_time'] }}" // Ensure start_time is ISO 8601
-                    },
-                    {% endfor %}
-                ]
-            });
-            calendar.render();
-        });
-    </script>
+       <div class="text-center mt-4">
+           <a href="{{ url_for('patient.patient_dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+       </div>
+   </div>
+
+
+   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
