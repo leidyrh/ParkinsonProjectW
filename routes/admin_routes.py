@@ -83,7 +83,7 @@ def admin_dashboard():
                 # Assign a new role to an existing user
                 user_id = request.form['user_id']
                 new_role = request.form['new_role']
-                MAX_ADMINS = 5
+                MAX_ADMINS = 10
 
                 if new_role == 'admin':
                     # Check if there are already enough admins
