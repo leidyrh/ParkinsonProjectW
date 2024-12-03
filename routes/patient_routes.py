@@ -146,7 +146,7 @@ def view_appointments():
 
     # Query to fetch all classes the patient is registered for
     query = '''
-        SELECT c.class_name, c.description, c.level, c.duration, c.start_time, c.capacity
+        SELECT c.class_name, c.description, c.level, c.duration, c.start_time, c.capacity, c.image_url
         FROM patient_classes pc
         JOIN classes c ON pc.class_id = c.class_id
         WHERE pc.patient_id = %s
